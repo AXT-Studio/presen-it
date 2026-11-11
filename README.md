@@ -1,59 +1,85 @@
-# AyaExpTech Presen'it!
+# AXT Presen'it! v2
 
-Markdown から美しいプレゼンスライドを作るツール。  
-通常の Markdown 文書としても読める単一ファイルを、少ない宣言だけで読みやすいスライドと PDF に組版します。
+通常のMarkdownに少しのディレクティブを加えて、読みやすいプレゼンテーションを作るViteプラグインです。
+ライブプレビュー、複数デッキの静的ビルド、発表者ビュー、ブラウザ印刷によるPDF保存に対応します。
+独自CLIや、Viewer用のHTML・TSエントリーは必要ありません。
 
-パッケージ: [`@ayaexptech/presenit`](https://www.npmjs.com/package/@ayaexptech/presenit) · サイト: [axt-studio.github.io/presen-it](https://axt-studio.github.io/presen-it/)
+## セットアップ
 
-[![npm](https://img.shields.io/npm/v/@ayaexptech/presenit)](https://www.npmjs.com/package/@ayaexptech/presenit)
-[![CI](https://github.com/AXT-Studio/presen-it/actions/workflows/ci.yml/badge.svg)](https://github.com/AXT-Studio/presen-it/actions/workflows/ci.yml)
+Node.js 22.18以上、Vite 8を使用します。v2のレジストリ公開はまだ行っていません。
+公開後のパッケージ名・import名はどちらも`@ayaexptech/presen-it`です。
 
-> [!NOTE]
-> このツールは、そのほとんどがAIによって実装された、いわゆるVibe-Codingプロダクトです。  
-> AIへの指示を行った私(綾坂こと)がDogfoodingを行っているためある程度品質については保証しますが、Vibe-Codingによるプロダクトであることには留意してください。  
-> なお、使用したモデルはGrok 4.5 High・Composer 2.5で、いずれもCursorから使用しています。
-
-## Why
-
-- Marp より組版を丁寧に
-- Slidev / Quarto より「普通の Markdown」を優先
-- 設定ファイルや JSX を増やさない
-
-## Quick start
-
-```bash
-pnpm add -D @ayaexptech/presenit
-pnpm exec presenit init my-talk   # → src/my-talk/slide.md（使い方入りスタート用デッキ）
-pnpm exec presenit dev my-talk
-pnpm exec presenit build my-talk   # → dist/my-talk/view.html
-pnpm exec presenit export my-talk  # → dist/my-talk/resume.pdf
+```sh
+pnpm add -D jsr:@ayaexptech/presen-it
 ```
 
-### 同梱デモを試す（このリポジトリ）
+```ts
+// vite.config.ts
+import { defineConfig } from "vite";
+import presenit from "@ayaexptech/presen-it";
 
-```bash
-pnpm install
-pnpm build
-pnpm presenit dev demo
-# Presenter: P またはツールバーで別タブに開く（?presenter でも直接起動可）
-pnpm presenit build demo
-pnpm presenit export demo
+export default defineConfig({
+    plugins: [presenit({ includes: ["src/**/index.md"] })],
+});
 ```
 
-## Authoring
+`src/slides/example/index.md`へMarkdownを書き、通常の`vite`を起動します。
+`/slides/example/`へアクセスするとViewerが表示されます。既存アプリの`index.html`があっても共存します。
 
-### Layout
-
-```text
-src/<slug>/slide.md
-src/<slug>/assets/...
+```sh
+vite
+vite build
+vite preview
 ```
+
+`dist/slides/example/index.html`と、Viteが処理した画像・JS・CSSが出力されます。
+`dist/`全体をディレクトリのindex.html配信に対応した静的ホストへ配置してください。
+サブパス配信はViteの`base: "/project/"`、移動可能な相対パス配信は`base: "./"`を設定します。
+
+### Vite+
+
+通常のVite+プロジェクトを作成してパッケージを追加します。
+
+```sh
+vp create vite:application
+vp add jsr:@ayaexptech/presen-it
+vp dev
+vp build
+vp preview
+```
+
+Vite+では`defineConfig`を`vite-plus`からimportし、同じ`presenit(...)`をpluginsへ追加します。
+Vite+の標準テンプレートにあるVite core alias/override設定をそのまま使います。
+通常のViteを手動で追加する必要はありません。
+
+### 対象ファイルとURL
+
+```ts
+presenit({
+    includes: ["src/**/*.md"],
+    root: "src", // URLの基準。Viteのroot自体は変更しない
+    excludes: ["src/**/draft/**"],
+})
+```
+
+| Markdown | URL | 出力 |
+| --- | --- | --- |
+| `src/slides/example/index.md` | `/slides/example/` | `dist/slides/example/index.html` |
+| `src/slides/meeting.md` | `/slides/meeting/` | `dist/slides/meeting/index.html` |
+| `talks/keynote.md` (`root: "talks"`) | `/keynote/` | `dist/keynote/index.html` |
+
+`includes`と`excludes`はVite root基準のglob、`root`はMarkdownの配置の基準です。
+ファイルの編集・追加・削除、参照画像の変更をdevへ反映します。
+相対画像はMarkdownファイル基準で解決し、選択済みMarkdown同士の相対リンクはViewerのURLへ変換します。
+`public`内のアセットはViteの通常の規約で利用できます。URLや既存HTMLとの衝突はエラーです。
+
+## Markdownの記法
 
 ### Frontmatter
 
 ```yaml
 ---
-title: My Talk # viewer HTML <title> / og:title（未設定時は AyaExpTech Presen'it! — <slug>）
+title: My Talk # viewer HTML <title> / og:title（未設定時は AXT Presen'it! — <slug>）
 description: Short blurb # meta description / og:description（未設定時は省略）
 theme: light # light | dark（既定: light）
 hue: 210 # アクセント色相 0–359（既定: 210）
@@ -65,7 +91,7 @@ fontFamily:
     mono: '"M PLUS 1 Code", ui-monospace, monospace'
 pageTransition:
     type: fade # none | fade | scroll（既定: fade）
-    duration: 0.2 # 秒（既定: 0.2）。PDF export では無視
+    duration: 0.2 # 秒（既定: 0.2）。PDF印刷 では無視
 animation:
     duration: 0.3 # 秒（既定: 0.3）。同一スライド内 reveal のフェード
 rawHTML: false # true で生 HTML を描画（既定: false）
@@ -189,52 +215,65 @@ fontFamily:
 > Confirm this before continuing.
 ```
 
-## Viewer shortcuts
+## 発表する
 
-| Key                                  | Action                                                                 |
-| ------------------------------------ | ---------------------------------------------------------------------- |
-| `←` `→` / Space / Enter              | 前後（同一スライドの reveal ステップ → スライド）                      |
-| `Home` / `End`                       | 最初 / 最後のスライド（ステップは入場状態）                            |
-| 左右スライド端（パディング幅）短押し | 前へ / 次へ（投影・選択は無視。ホバーで矢印表示）                      |
-| `O`                                  | オーバービュー（グリッド・フラグメント全表示）                         |
-| `F`                                  | フルスクリーン                                                         |
-| `P`                                  | プレゼンターを別タブで開く（投影タブはそのまま）                       |
-| `B`                                  | ブラックアウト（投影を黒画面に。Presenter トグルでも可。`Esc` で解除） |
-| `T`                                  | タイマー一時停止／再開（プレゼンター）                                 |
-| `R`                                  | タイマーリセット（プレゼンター）                                       |
-| `L`                                  | レーザーポインター（投影・プレゼンター。プレゼンターから投影へ同期）   |
+画面下部の「前へ」「次へ」「一覧」「メニュー」で操作します。
+Overviewではスライドを選択して移動できます。メニューから発表者ビューを別タブで開くと、
+同じデッキのページ・Reveal・ブラックアウト・レーザーが双方向で同期します。
+Presenterには次の表示、経過時間、スピーカーノートが表示されます。
 
-左下にマウスを置くと、前後移動・Overview・Presenter・Fullscreen・Laser のツールバーが出ます。Presenter は別タブで開き、投影タブとスライド位置・reveal ステップ・レーザーは BroadcastChannel で同期します。
+| キー | 操作 |
+| --- | --- |
+| ← / → / Space / Enter | 前後（Revealのステップを優先） |
+| Home / End | 最初 / 最後 |
+| O | Overview |
+| P | 発表者ビューを別タブで開く |
+| F | フルスクリーン |
+| L | レーザーの切替 |
+| B / Esc | ブラックアウト切替 / 解除 |
+| T / R | Presenterのタイマー停止再開 / リセット |
 
-URL ハッシュは 1 始まり（`#3` = 3 枚目）。ステップはハッシュに含めません。`?presenter` を付けて直接プレゼンターを開くこともできます。機能一覧サンプルは `pnpm presenit dev kitchen-sink`。
+URLの`#N`は1始まりのページ番号です。devの更新時はページとReveal状態を保持します。
+`?presenter`を付けて発表者ビューを直接開くこともできます。
+タブ同期にはBroadcastChannelを使用するため、同じブラウザ・同じオリジンで開いてください。
+フルスクリーン等が制限されている場合は、ブラウザのメニューを利用できます。
 
-## 1.0 compatibility
+## PDFとして保存する
 
-CLI・documented frontmatter・directives・Markdown 方言は SemVer で安定させます。詳細と「1.0 でやらないこと」は [docs/1.0-scope.md](./docs/1.0-scope.md)。
+「メニュー」→「PDFとして保存」を押し、ブラウザの印刷画面で「PDFに保存」を選びます。
+全Revealを表示し、1スライドを1ページとして印刷します。Viewerの操作UI・ノートは入りません。
+印刷設定は余白なし・倍率100%・ヘッダーとフッターなしを推奨します。
+スライドの寸法と縦横比はfrontmatterのwidth/heightに従います。
+ビルド時のPDF生成やブラウザ自動操作ライブラリは利用者の依存に含まれません。
 
-## Releasing
+## v1からの移行
 
-1. `package.json` と `src/pkg.ts` を同じ次バージョンに上げる
-2. `CHANGELOG.md` を更新する
-3. `main` にマージする
-4. GitHub Release を作成し、タグを `vX.Y.Z` にする（`package.json` と一致必須）
+- npmの`@ayaexptech/presenit`からJSRの`@ayaexptech/presen-it`へ変更。
+- `presenit init/dev/build/export`は廃止。Viteの通常の設定とコマンドへ置換。
+- `src/<slug>/slide.md`は必須ではありません。旧ファイルも`includes`で指定できます。
+- 既存のfrontmatter・ディレクティブ・Markdown拡張の意味と既定値は維持します。
+- title未指定時の製品名は`AXT Presen'it! — <deck path>`へ変更。
+- 出力URLとViewerの操作部・内部APIは新しくなりました。
 
-Release 公開時、[`.github/workflows/release.yml`](./.github/workflows/release.yml) が npm Trusted Publishing（OIDC）で自動 publish する。詳細は [docs/publishing.md](./docs/publishing.md)。
+## このリポジトリで開発する
 
-公式サイト（GitHub Pages）は [`site/`](./site/) を [`.github/workflows/pages.yml`](./.github/workflows/pages.yml) がデプロイする。
-
-## Development（このリポジトリ）
-
-```bash
+```sh
 pnpm install
-pnpm check
 pnpm build
+pnpm dev
+pnpm check
+pnpm test:integration
+pnpm check:jsr
 ```
 
-Stack: TypeScript, Node.js ≥22, pnpm, Vite, Preact + Signals, Oxfmt, Oxlint, Puppeteer.
+サンプルURLは`/slides/example/`と`/slides/team/`です。
+`build`はViewerをJS/CSS文字列のTSモジュールへ生成し、プラグインのJSと型定義を`dist/`へ出力します。
+生成した`src/generated/viewer.ts`をコミットするため、JSR利用者に追加のビルド工程を要求しません。
+ブラウザ試験はChrome/Chromiumが必要です。自動検出できない場合は`CHROME_PATH`を指定します。
+結合テストはtarballを空のプロジェクトへ導入し、ソースsymlinkに依存せず検証します。
 
-AI 向け作者ガイド: [llms.txt](./llms.txt)
+設計と検証結果は`docs/v2-spec.md`、`docs/v2-plan.md`、`docs/v2-validation.md`を参照してください。
 
 ## License
 
-[MIT](./LICENSE)
+MIT

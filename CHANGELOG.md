@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.0.0 - Unreleased
+
+- Replace the custom CLI with a TypeScript Vite plugin for JSR `@ayaexptech/presen-it`.
+- Discover multiple Markdown decks with globs; emit directory-based HTML routes with Vite assets and base support.
+- Add a framework-free Viewer with Reveal, Overview, synchronized Presenter, laser, blackout and timer.
+- Save PDFs through browser printing, with all Reveal steps and one slide per page.
+- Preserve Markdown/frontmatter/directive semantics and defaults; update only the fallback product title.
+- Verify Vite, Vite+, local tarball installation, consumer types, real authored slides and JSR dry-run.
+- Remove automatic npm publishing; no v2 registry release has been performed.
+
 ## 1.1.3 — 2026-08-03
 
 ### Fixes

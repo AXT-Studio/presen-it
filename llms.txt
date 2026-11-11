@@ -1,32 +1,20 @@
-# AyaExpTech Presen'it!
+# AXT Presen'it! v2
 
-> A tool for turning a normal Markdown document into tidy presentation slides with minimal directives.
+TypeScript ESM Vite plugin; JSR package and import: @ayaexptech/presen-it.
+Do not use the old presenit CLI. Users author Markdown, vite.config.ts and package settings only.
 
-## Specs
-
-Package: `@ayaexptech/presenit` (npm)
-CLI: `presenit`
-
-### Project Directory Layout
-
-```txt
-package.json
-src/<slug>/slide.md
-src/<slug>/assets/...   # optional assets
-dist/<slug>/view.html   # from `presenit build`
-dist/<slug>/resume.pdf  # from `presenit export`
+```ts
+import { defineConfig } from "vite"; // or "vite-plus"
+import presenit from "@ayaexptech/presen-it";
+export default defineConfig({ plugins: [presenit({ includes: ["src/**/index.md"] })] });
 ```
 
-### Commands
-
-```bash
-pnpm add -D @ayaexptech/presenit
-pnpm exec presenit init <slug> # writes src/<slug>/slide.md (starter deck)
-pnpm exec presenit init <slug> --force # to overwrite
-pnpm exec presenit dev <slug>
-pnpm exec presenit build <slug>
-pnpm exec presenit export <slug>
-```
+Use vite dev/build/preview or vp dev/build/preview. Plugin options: includes (glob array),
+root (Markdown route base, default src), excludes (glob array); globs resolve from Vite root.
+src/slides/example/index.md -> /slides/example/ -> dist/slides/example/index.html.
+src/talk.md -> /talk/. Default includes is src/**/index.md. Existing HTML entries are retained.
+Relative images resolve from Markdown; selected Markdown links become Viewer routes.
+Vite base supports subpath and relative deployment. Copy all of dist when hosting.
 
 ### slide.md YAML frontmatter (slide's settings)
 
@@ -120,31 +108,18 @@ Example:
 - `$inline$` and `$$ block $$` math → KaTeX
 - GitHub alerts use blockquotes: `> [!NOTE]`, `TIP`, `IMPORTANT`, `WARNING`, or `CAUTION`; they render as labelled, slide-friendly alert asides
 
-### Viewer keys
 
-- `←` `→` / Space: navigate (within-slide reveal steps first, then slides)
-- `Home` `End`: first/last slide (step resets to entrance)
-- Projection short-press zones: left/right slide-edge bands (padding width) = previous/next (ignores drag / text selection; hover shows a chevron affordance)
-- Bottom-left hover toolbar: Overview / Presenter / Fullscreen / Laser (`L`)
-- `O`: overview grid (all fragments visible)
-- `F`: fullscreen
-- `P`: open presenter in a separate tab/window (projection tab unchanged)
-- `B`: blackout projection (opaque black overlay; syncs across tabs; `Esc` clears blackout first)
-- `T`: timer pause/resume (presenter)
-- `R`: timer reset (presenter)
-- `L`: laser pointer (red dot on current slide; presenter mouse syncs to projection)
-- URL hash `#N` (1-based) syncs the current page (kept across markdown reload in `dev`); step is not in the hash
-- `?presenter` query: open presenter directly in that tab
-- Projection and presenter tabs stay in sync via `BroadcastChannel` (hash, index, step, blackout, and laser)
-- Presenter “Next” preview: next reveal step on the current slide when available; otherwise the next slide
-## Tips for Creating Better Slides
+### Viewer and PDF
 
-- Use `center-x=true` for title / quote / single figure slides
-- Use `column-break` for text + figure
-- Keep speaker notes factual and short
-- Avoid raw HTML unless `rawHTML: true` is intentional
+Arrows/Space/Enter navigate Reveal steps then slides. Home/End jump to first/last slide.
+O: overview; P: separate Presenter; F: fullscreen; L: laser; B: blackout; Escape: clear blackout.
+T/R: pause/reset presenter timer. Same-origin tabs sync page, Reveal, blackout and laser via BroadcastChannel.
+Presenter shows notes and next step. URL hash is 1-based slide number; ?presenter selects Presenter.
+Menu "PDFとして保存" opens browser print; choose Save as PDF, no margins, no headers/footers, 100% scale.
+Print shows all Reveal content, one slide per page, no speaker notes or Viewer UI.
 
-## Optional
+### Development
 
-- [README.md](./README.md)
-- [Starter Slide](./src/templates/starter-slide.md)
+pnpm build generates src/generated/viewer.ts and dist JS/types; commit the generated module.
+pnpm check; pnpm test:integration; pnpm check:jsr (dry run only).
+No registry publish without explicit authorization.

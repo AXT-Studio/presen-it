@@ -1,27 +1,27 @@
-# 公開チェックリスト（メンテナ向け）
+# v2パッケージの検証と公開
 
-## 初回セットアップ: npm Trusted Publishing
+JSR名・import名: `@ayaexptech/presen-it`。旧npm名`@ayaexptech/presenit`とは異なる。
+通常の開発作業やCIではレジストリへ公開しない。公開は所有者の明示的な依頼後に別途行う。
+GitHub Release公開をトリガーにした旧npm自動publishは廃止した。
 
-1. npm の [`@ayaexptech/presenit`](https://www.npmjs.com/package/@ayaexptech/presenit) → **Settings → Trusted Publisher**
-2. GitHub Actions を追加:
-    - Organization or user: `AXT-Studio`
-    - Repository: `presen-it`
-    - Workflow filename: `release.yml`
-    - Environment: （未使用なら空）
-3. このリポジトリの Release workflow は `id-token: write` + `pnpm publish --provenance` で OIDC 認証する（`NPM_TOKEN` は不要）
+```sh
+pnpm install --frozen-lockfile
+pnpm build
+pnpm check
+pnpm test:integration
+pnpm check:jsr
+```
 
-フォールバックとして Automation トークンを `NPM_TOKEN` に置くやり方もあるが、2FA 付きアカウントでは OTP エラーになりやすい。Trusted Publishing を優先する。
+`pnpm build`でViewerのTS/CSSから`src/generated/viewer.ts`を生成する。
+このファイルをコミットし、`jsr.json`で明示したESM/TypeScriptソースを公開する。
+JSR利用者にViewerのビルドやHTML/TSエントリー作成を求めない。
+`package.json`と`jsr.json`のversionを揃える。公開APIはmod.tsのプラグインとOptionsのみ。
 
-## 毎回のリリース手順
+`node scripts/build.mjs --package`は同じソースと生成Viewerからローカル配布用のJS/型を作り、
+`tmp/package/`へ配置する。結合テストはここからtarballを作り、空のプロジェクトへインストールする。
+ソースsymlinkや開発用node_modulesがない状態でVite・Vite+の操作を試験する。
+これはレジストリのnpm互換変換そのものを検証するものではないため、公開後のJSR取得試験も推奨する。
 
-1. `package.json` と `src/pkg.ts` のバージョンを上げる
-2. `CHANGELOG.md` を更新する
-3. `main` にマージする
-4. GitHub → **Releases → Draft a new release**
-    - Tag: `vX.Y.Z`（`package.json` の version と一致させる）
-    - Release を Publish する
-5. **Actions → Release** を確認する。npm publish が自動で走る
-
-1.0.0 以降は、明示的なリリース依頼があるまでエージェントが勝手にタグ／Release を切らない（`.cursor/rules/release-policy.mdc`）。
-
-公式サイトは `site/` を **Actions → GitHub Pages** workflow がデプロイする（https://axt-studio.github.io/presen-it/）。
+Vite+プロジェクトでは公式テンプレートのVite core alias/overrideを使用する。
+手動npm導入の場合は[Vite+ Project-local CLI](https://viteplus.dev/guide/local-cli)に従う。
+JSRの導入方法・ESM・npm依存・型制約は[公式公開ガイド](https://jsr.io/docs/publishing-packages)を参照。

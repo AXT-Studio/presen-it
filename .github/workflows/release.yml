@@ -1,55 +1,24 @@
-name: Release
-
+name: Verify JSR package
+# This workflow never publishes. Registry publication needs explicit authorization.
 on:
-    release:
-        types: [published]
-
-concurrency:
-    group: release-${{ github.ref }}
-    cancel-in-progress: false
-
+    workflow_dispatch:
+permissions:
+    contents: read
 jobs:
-    publish:
-        name: Publish to npm
+    verify:
         runs-on: ubuntu-latest
-        timeout-minutes: 20
-        permissions:
-            contents: read
-            id-token: write
         steps:
-            - name: Checkout
-              uses: actions/checkout@v4
-
-            - name: Setup pnpm
-              uses: pnpm/action-setup@v4
+            - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v4
               with:
                   version: 11.11.0
-
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
+            - uses: actions/setup-node@v4
               with:
                   node-version: 22
-                  registry-url: https://registry.npmjs.org
-                  cache: pnpm
-
-            - name: Install dependencies
-              run: pnpm install --frozen-lockfile
-
-            - name: Verify package version matches release tag
-              run: |
-                  TAG="${GITHUB_REF_NAME#v}"
-                  PKG="$(node -p "require('./package.json').version")"
-                  echo "tag=$TAG package.json=$PKG"
-                  if [ "$TAG" != "$PKG" ]; then
-                    echo "::error::Release tag v$TAG must match package.json version $PKG"
-                    echo "Bump package.json (and src/pkg.ts) before creating the GitHub Release."
-                    exit 1
-                  fi
-
-            - name: Check and build
-              run: pnpm check && pnpm build
-
-            # Auth via npm Trusted Publishing (OIDC). Do not set NODE_AUTH_TOKEN —
-            # a token with 2FA would force OTP and skip the OIDC path.
-            - name: Publish to npm
-              run: pnpm publish --access public --no-git-checks --provenance
+            - uses: denoland/setup-deno@v2
+              with:
+                  deno-version: v2.x
+            - run: pnpm install --frozen-lockfile
+            - run: pnpm build
+            - run: pnpm check
+            - run: pnpm check:jsr
