@@ -1,5 +1,7 @@
 ---
 title: Team update
+theme: dark
+hue: 280
 ---
 
 # Team update

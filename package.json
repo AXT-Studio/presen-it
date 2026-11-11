@@ -1,6 +1,6 @@
 {
     "name": "@ayaexptech/presen-it",
-    "version": "2.0.0",
+    "version": "2.0.0-rc.1",
     "description": "A Vite plugin for Markdown presentations, presenter view, and browser PDF export.",
     "keywords": [
         "markdown",
@@ -39,7 +39,7 @@
         "dev": "vite examples/slides",
         "build:example": "vite build examples/slides",
         "preview": "vite preview examples/slides",
-        "format": "oxfmt src tests scripts mod.ts examples docs/v2-*.md",
+        "format": "oxfmt src tests scripts mod.ts examples",
         "format:check": "oxfmt --check src tests scripts mod.ts examples",
         "lint": "oxlint src tests scripts mod.ts",
         "typecheck": "tsc --noEmit",

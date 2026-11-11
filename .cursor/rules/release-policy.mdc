@@ -11,6 +11,6 @@ The previous npm package was `@ayaexptech/presenit` (formerly `@axt_ayakoto/pres
 1. Do not push, merge, tag, create GitHub Releases, or publish JSR/npm packages merely because checks pass.
 2. A release or registry publication requires the owner's explicit request. Routine verification stops at JSR dry-run.
 3. Keep `package.json` and `jsr.json` names/versions consistent. `src/pkg.ts` belonged to v1 and no longer exists.
-4. Build and commit `src/generated/viewer.ts` when changing Viewer sources; see `HANDOFF.md` and `docs/publishing.md`.
+4. Build and commit `src/generated/viewer.ts` when changing Viewer sources; see `docs/development.md` and `docs/publishing.md`.
 
 `.github/workflows/release.yml` is a manual verification workflow and does not publish.

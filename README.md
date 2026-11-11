@@ -4,12 +4,10 @@
 ライブプレビュー、複数デッキの静的ビルド、発表者ビュー、ブラウザ印刷によるPDF保存に対応します。
 独自CLIや、Viewer用のHTML・TSエントリーは必要ありません。
 
-開発を引き継ぐ場合は[HANDOFF.md](./HANDOFF.md)から、資料一覧は[docs/README.md](./docs/README.md)から確認してください。
-
 ## セットアップ
 
-Node.js 22.18以上、Vite 8を使用します。v2のレジストリ公開はまだ行っていません。
-公開後のパッケージ名・import名はどちらも`@ayaexptech/presen-it`です。
+Node.js 22.18以上、Vite 8を使用します。パッケージは[JSR](https://jsr.io/@ayaexptech/presen-it)で配布しており、
+パッケージ名・import名はどちらも`@ayaexptech/presen-it`です。
 
 ```sh
 pnpm add -D jsr:@ayaexptech/presen-it
@@ -283,7 +281,8 @@ pnpm check:jsr
 ブラウザ試験はChrome/Chromiumが必要です。自動検出できない場合は`CHROME_PATH`を指定します。
 結合テストはtarballを空のプロジェクトへ導入し、ソースsymlinkに依存せず検証します。
 
-設計と検証結果は`docs/v2-spec.md`、`docs/v2-plan.md`、`docs/v2-validation.md`を参照してください。
+構成・Viewerの設計・確認事項は[docs/development.md](./docs/development.md)、
+入力の互換性は[docs/markdown-compatibility.md](./docs/markdown-compatibility.md)、公開手順は[docs/publishing.md](./docs/publishing.md)を参照してください。
 
 ## License
 

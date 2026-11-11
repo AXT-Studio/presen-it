@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0 - Unreleased
+## 2.0.0-rc.1 - Unreleased
 
 - Replace the custom CLI with a TypeScript Vite plugin for JSR `@ayaexptech/presen-it`.
 - Discover multiple Markdown decks with globs; emit directory-based HTML routes with Vite assets and base support.
@@ -15,7 +15,7 @@
 - Save PDFs through browser printing, with all Reveal steps and one slide per page.
 - Preserve Markdown/frontmatter/directive semantics and defaults; update only the fallback product title.
 - Verify Vite, Vite+, local tarball installation, consumer types, real authored slides and JSR dry-run.
-- Remove automatic npm publishing; no v2 registry release has been performed.
+- Remove automatic npm publishing; JSR publication is a manual step (see `docs/publishing.md`).
 
 ## 1.1.3 — 2026-08-03
 
@@ -68,7 +68,7 @@
 
 ### Features
 
-- Stable **1.0.0** release: CLI, documented frontmatter, directives, and Markdown dialect follow SemVer (see `docs/1.0-scope.md`)
+- Stable **1.0.0** release: CLI, documented frontmatter, directives, and Markdown dialect follow SemVer (see `docs/1.0-scope.md` in the v1 tree)
 - Official site on GitHub Pages (`site/`, https://axt-ayakoto.github.io/presen-it/)
 - README / `llms.txt` updated for 1.0 (prerelease wording removed; site + scope links)
 
