@@ -327,7 +327,3 @@ pnpm check:jsr
 
 構成・Viewerの設計・確認事項は[docs/development.md](./docs/development.md)、
 入力の互換性は[docs/markdown-compatibility.md](./docs/markdown-compatibility.md)、公開手順は[docs/publishing.md](./docs/publishing.md)を参照してください。
-
-## License
-
-MIT
