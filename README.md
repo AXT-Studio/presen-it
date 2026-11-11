@@ -1,17 +1,31 @@
-# AXT Presen'it! v2
+# AyaExpTech Presen'it!
 
-通常のMarkdownに少しのディレクティブを加えて、読みやすいプレゼンテーションを作るViteプラグインです。
-ライブプレビュー、複数デッキの静的ビルド、発表者ビュー、ブラウザ印刷によるPDF保存に対応します。
-独自CLIや、Viewer用のHTML・TSエントリーは必要ありません。
+Markdownから整ったプレゼンスライドを作るViteプラグイン。  
+ライブプレビュー、複数デッキの静的ビルド、発表者ビュー、ブラウザ印刷によるPDF保存に対応しています。
 
-## セットアップ
+> [!NOTE]
+> このツールは、そのほとんどがAIによって実装された、いわゆるVibe-Codingプロダクトです。  
+> AIへの指示を行った私(綾坂こと)自身が使用しているためある程度品質については保証しますが、コードベース管理のほとんどをAIエージェントに委任しているプロダクトであることには留意してください。  
+> なお、使用モデルはGPT-6.1 Sol (Codex)・Claude Opus 5.5 (Claude Code)です。
 
-Node.js 22.18以上、Vite 8を使用します。パッケージは[JSR](https://jsr.io/@ayaexptech/presen-it)で配布しており、
-パッケージ名・import名はどちらも`@ayaexptech/presen-it`です。
+## License
+
+copyright (c) 2026- Ayasaka-Koto(AyaExpTech).  
+Released under the [MIT License](LICENSE).
+
+## Usage
+
+### セットアップ
+
+JSRレジストリ上に公開していて、パッケージ名は`@ayaexptech/presen-it`です。
 
 ```sh
+vp add -D jsr:@ayaexptech/presen-it
 pnpm add -D jsr:@ayaexptech/presen-it
 ```
+
+Presen'it!は「指定されたMarkdownファイルを仮想的なHTMLエントリにするViteプラグイン」です。  
+Viteが動く場所ならだいたい動くはずです。
 
 ```ts
 // vite.config.ts
@@ -19,102 +33,82 @@ import { defineConfig } from "vite";
 import presenit from "@ayaexptech/presen-it";
 
 export default defineConfig({
-    plugins: [presenit({ includes: ["src/**/index.md"] })],
+    plugins: [
+        presenit({
+            includes: ["src/**/*.md"],
+            excludes: ["src/**/draft/**"],
+            root: "src",
+        }),
+    ],
 });
 ```
 
-`src/slides/example/index.md`へMarkdownを書き、通常の`vite`を起動します。
-`/slides/example/`へアクセスするとViewerが表示されます。既存アプリの`index.html`があっても共存します。
+`includes`・`excludes`の条件を満たすMarkdownファイルを対象に、プロジェクトルートからの相対パスを以下の通り変換したパスにHTMLを生成します。
 
-```sh
-vite
-vite build
-vite preview
-```
+1. もとの相対パスから先頭の`root`を削除します (`root`はURLの基準です)
+2. もとの相対パスの最後の`.md`を`.html`に置き換えます
 
-`dist/slides/example/index.html`と、Viteが処理した画像・JS・CSSが出力されます。
-`dist/`全体をディレクトリのindex.html配信に対応した静的ホストへ配置してください。
-サブパス配信はViteの`base: "/project/"`、移動可能な相対パス配信は`base: "./"`を設定します。
+たとえば`src/slides/example/index.md`は`slides/example/`でViewerにアクセスできるようになります。
 
-### Vite+
+> [!TIP]
+>
+> - markdownファイル内相対パスはそのファイル基準で解決します
+>     - ただし、別のスライドへの相対リンクはViewerのURLに変換されます
+> - `public`内のアセットはViteの通常の規約通り利用できます
+> - URLや既存HTMLとの衝突が起きたらエラーを出します
 
-通常のVite+プロジェクトを作成してパッケージを追加します。
+### スライドを書く
 
-```sh
-vp create vite:application
-vp add jsr:@ayaexptech/presen-it
-vp dev
-vp build
-vp preview
-```
+### サイトで公開する
 
-Vite+では`defineConfig`を`vite-plus`からimportし、同じ`presenit(...)`をpluginsへ追加します。
-Vite+の標準テンプレートにあるVite core alias/override設定をそのまま使います。
-通常のViteを手動で追加する必要はありません。
+### 発表する
 
-### 対象ファイルとURL
+### PDFファイルを取得する
+
+### Advanced: デッキ一覧の取得
+
+一覧ページ作りたいよ〜って方向けのやつです。
 
 ```ts
-presenit({
-    includes: ["src/**/*.md"],
-    root: "src", // URLの基準。Viteのroot自体は変更しない
-    excludes: ["src/**/draft/**"],
-})
-```
-
-| Markdown | URL | 出力 |
-| --- | --- | --- |
-| `src/slides/example/index.md` | `/slides/example/` | `dist/slides/example/index.html` |
-| `src/slides/meeting.md` | `/slides/meeting/` | `dist/slides/meeting/index.html` |
-| `talks/keynote.md` (`root: "talks"`) | `/keynote/` | `dist/keynote/index.html` |
-
-`includes`と`excludes`はVite root基準のglob、`root`はMarkdownの配置の基準です。
-ファイルの編集・追加・削除、参照画像の変更をdevへ反映します。
-相対画像はMarkdownファイル基準で解決し、選択済みMarkdown同士の相対リンクはViewerのURLへ変換します。
-`public`内のアセットはViteの通常の規約で利用できます。URLや既存HTMLとの衝突はエラーです。
-
-### デッキ一覧を取得する
-
-`virtual:presenit/decks`から、選択されたデッキのメタデータを通常のアプリのコードでimportできます。
-一覧ページそのものは生成しないため、表示はアプリ側で自由に作れます。
-
-```ts
-// src/main.ts
-import { decks } from "virtual:presenit/decks";
+// Presen'it!を設定したViteプロジェクトの中で……
+import { decks } from "@ayaexptech/presen-it/decks";
 
 for (const deck of decks) {
     console.log(deck.title, deck.url, deck.slideCount);
 }
 ```
 
-型は`@ayaexptech/presen-it/decks`が持っています。JSRはアンビエントモジュール宣言を配布できないため、
-仮想モジュールの型はプロジェクト側の`.d.ts`で次のようにつなぎます。
+`deck`の型は以下の通りです。
 
 ```ts
-// src/env.d.ts
-declare module "virtual:presenit/decks" {
-    export * from "@ayaexptech/presen-it/decks";
-}
+type PresenitDeck = {
+    /** ViewerのURL（Viteの`base`込み、`/`終わり）。例: `"/demo/slides/example/"` */
+    url: string;
+    /** `base`を除いたURL。一意なのでkeyに使えます。例: `"/slides/example/"` */
+    route: string;
+    /** Vite root基準のMarkdownパス。例: `src/slides/example/index.md` */
+    source: string;
+    /** Viewerの`<title>`と同じ値（未設定時は `AXT Presen'it! — <route>`） */
+    title: string;
+    /** frontmatterの`description`（未設定時は`""`） */
+    description: string;
+    /** スライド（ページ）数 */
+    slideCount: number;
+    /** 正規化済みのテーマ */
+    theme: "light" | "dark";
+    /** 正規化済みの色相（0–359） */
+    hue: number;
+    /** スライドの幅（px）。サムネイルの縦横比などに */
+    width: number;
+    /** スライドの高さ（px） */
+    height: number;
+    /** 書かれたままのfrontmatter（JSON互換値）。`date`や`tags`など独自キーが書かれた場合Viewerでは無視されるがこっちには載る */
+    frontmatter: Record<string, unknown>;
+};
 ```
-
-`import { decks } from "@ayaexptech/presen-it/decks"`と書いても同じモジュールになり、この宣言は不要です。
-どちらもプラグインが生成するため、`presenit()`を設定したViteの外ではimportできません（例外を投げます）。
-
-| プロパティ | 型 | 内容 |
-| --- | --- | --- |
-| `url` | `string` | ViewerのURL（Viteの`base`込み、`/`終わり）。例: `/demo/slides/example/` |
-| `route` | `string` | `base`を除いたURL。例: `/slides/example/`。一意なのでkeyに使えます |
-| `source` | `string` | Vite root基準のMarkdownパス。例: `src/slides/example/index.md` |
-| `title` | `string` | Viewerの`<title>`と同じ値（未設定時は`AXT Presen'it! — <route>`） |
-| `description` | `string` | frontmatterの`description`（未設定時は`""`） |
-| `slideCount` | `number` | スライド（ページ）数 |
-| `theme` / `hue` | `"light" \| "dark"` / `number` | 正規化済みのテーマと色相 |
-| `width` / `height` | `number` | スライドの寸法（px）。サムネイルの縦横比などに |
-| `frontmatter` | `Record<string, unknown>` | 書かれたままのfrontmatter（JSON互換値）。`date`や`tags`など独自キーも含む |
 
 - 並び順はMarkdownのパス順です。必要ならアプリ側で並べ替えてください。
 - 値はViewerと同じパーサーで読み取ります。frontmatterや記法の意味は変わりません。
-  未知のキーは従来どおりViewerでは無視され、`frontmatter`からだけ参照できます。
 - `url`は`base: "/project/"`やURLのbaseを含みます。`base: "./"`のビルドでは、
   Viteのアセットと同様にバンドルされたJSの位置から解決した完全なURLになります。
 - devではMarkdownの追加・削除で再読込し、編集ではメタデータが変わったときだけ、
@@ -278,17 +272,17 @@ Overviewではスライドを選択して移動できます。メニュー（︙
 同じデッキのページ・Reveal・ブラックアウト・レーザーが双方向で同期します。
 Presenterには次の表示、経過時間、スピーカーノートが表示され、操作バーは常に表示されます。
 
-| キー | 操作 |
-| --- | --- |
+| キー                                      | 操作                                                                  |
+| ----------------------------------------- | --------------------------------------------------------------------- |
 | ← / → / Space / Enter / PageUp / PageDown | 前後（Revealのステップを優先）。PageUp/PageDownはプレゼンリモコン向け |
-| Home / End | 最初 / 最後 |
-| O | Overview |
-| P | 発表者ビューを別タブで開く |
-| F | フルスクリーン |
-| L | レーザーの切替 |
-| B / . / Esc | ブラックアウト切替 / 切替（プレゼンリモコン向け） / 解除 |
-| T / R | Presenterのタイマー停止再開 / リセット |
-| Esc | 開いたメニュー・キーボードで表示した操作バーを閉じる |
+| Home / End                                | 最初 / 最後                                                           |
+| O                                         | Overview                                                              |
+| P                                         | 発表者ビューを別タブで開く                                            |
+| F                                         | フルスクリーン                                                        |
+| L                                         | レーザーの切替                                                        |
+| B / . / Esc                               | ブラックアウト切替 / 切替（プレゼンリモコン向け） / 解除              |
+| T / R                                     | Presenterのタイマー停止再開 / リセット                                |
+| Esc                                       | 開いたメニュー・キーボードで表示した操作バーを閉じる                  |
 
 タッチ操作では左右のスワイプで前後に移動します。ブラックアウト中は画面のクリックでも解除できます。
 
