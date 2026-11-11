@@ -152,8 +152,8 @@ export function presenit(options: PresenitOptions = {}): Plugin {
                     `url("${rootURL(path.join(path.dirname(cssPath), "fonts", file))}")`,
             );
             // Imports must precede declarations in the final CSS.
-            const imports = css.match(/@import[^;]*;/g)?.join("\n") ?? "";
-            css = imports + "\n" + katexCss + "\n" + css.replace(/@import[^;]*;/g, "");
+            const imports = css.match(/^@import[^\n]*;[ \t]*$/gm)?.join("\n") ?? "";
+            css = imports + "\n" + katexCss + "\n" + css.replace(/^@import[^\n]*;[ \t]*$/gm, "");
         }
         const title = deck.config.title.trim() || `AXT Presen'it! — ${entry.route}`;
         const slides = rendered.slides

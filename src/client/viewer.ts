@@ -275,6 +275,8 @@ function update(broadcast = true): void {
     laserButton.setAttribute("aria-pressed", String(state.laser));
     blackoutButton.setAttribute("aria-pressed", String(state.blackout));
     blackout.hidden = presenter || !state.blackout;
+    document.body.classList.toggle("is-blackout", !presenter && state.blackout);
+    toolbar.inert = !presenter && state.blackout;
     if (!state.laser) hideLaser();
     history.replaceState(null, "", "#" + (state.index + 1));
     try {

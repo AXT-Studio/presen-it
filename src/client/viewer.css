@@ -303,3 +303,9 @@ button[aria-pressed="true"] {
         display: none;
     }
 }
+
+.is-blackout .presenit-toolbar,
+.is-blackout .presenit-status,
+.is-blackout .presenit-laser {
+    visibility: hidden;
+}

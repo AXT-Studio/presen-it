@@ -1,5 +1,5 @@
 import { build } from "esbuild";
-import { readFile, writeFile, mkdir, rm, copyFile } from "node:fs/promises";
+import { readFile, writeFile, mkdir, rm, readdir, copyFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 
 await mkdir("src/generated", { recursive: true });
@@ -26,6 +26,18 @@ execFileSync(
     ["node_modules/typescript/bin/tsc", "--project", "tsconfig.build.json"],
     { stdio: "inherit" },
 );
+// TypeScript rewrites emitted JS imports, but declaration imports need JS specifiers too.
+async function declarations(directory) {
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+        const file = directory + "/" + entry.name;
+        if (entry.isDirectory()) await declarations(file);
+        else if (file.endsWith(".d.ts")) {
+            const source = await readFile(file, "utf8");
+            await writeFile(file, source.replace(/(from ["']\.[^"']*)\.ts(["'])/g, "$1.js$2"));
+        }
+    }
+}
+await declarations("dist");
 if (process.argv.includes("--package")) {
     await rm("tmp/package", { recursive: true, force: true });
     await mkdir("tmp/package", { recursive: true });
