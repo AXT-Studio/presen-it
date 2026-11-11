@@ -2,12 +2,22 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
 import { glob } from "tinyglobby";
 import { parseFragment, serialize, type DefaultTreeAdapterMap } from "parse5";
 import type { Plugin, ResolvedConfig, ViteDevServer } from "vite";
 import { parseSlideMarkdown } from "../parse/index.ts";
 import { renderDeckAsync } from "../render/index.ts";
 import { viewerJs, viewerCss } from "../generated/viewer.ts";
+import {
+    DECKS_ID,
+    DECKS_PACKAGE_ID,
+    deckMetadata,
+    decksModuleCode,
+    deckTitle,
+    replaceRelativeBase,
+    type DeckMetadata,
+} from "./decks.ts";
 
 /** Markdown selection and the directory from which output routes are derived. */
 export interface PresenitOptions {
@@ -32,6 +42,12 @@ const JS_URL = "/@presenit/viewer.js";
 const CSS_URL = "/@presenit/viewer.css";
 const THEME = "/@presenit/theme/";
 const slash = (value: string): string => value.replaceAll("\\", "/");
+const RESOLVED_DECKS_ID = "\0" + DECKS_ID;
+/** The published `decks` stub (TS from JSR source, JS from the npm build). */
+const DECKS_STUBS = ["ts", "js"].map((extension) => {
+    const url = new URL("../../decks." + extension, import.meta.url);
+    return url.protocol === "file:" ? slash(fileURLToPath(url)) : url.href;
+});
 const escape = (value: string): string =>
     value.replace(
         /[&<>"']/g,
@@ -47,6 +63,9 @@ export function presenit(options: PresenitOptions = {}): Plugin {
     let entries: Entry[] = [];
     const documents = new Map<string, Promise<Document>>();
     const assetDependencies = new Map<string, Set<string>>();
+    const metadata = new Map<string, { markdown: string; value: DeckMetadata }>();
+    /** Settles after the watcher has processed queued Markdown additions and removals. */
+    let discovered: Promise<void> = Promise.resolve();
     const includes = options.includes ?? ["src/**/index.md"];
     const excludes = [
         "**/node_modules/**",
@@ -155,7 +174,7 @@ export function presenit(options: PresenitOptions = {}): Plugin {
             const imports = css.match(/^@import[^\n]*;[ \t]*$/gm)?.join("\n") ?? "";
             css = imports + "\n" + katexCss + "\n" + css.replace(/^@import[^\n]*;[ \t]*$/gm, "");
         }
-        const title = deck.config.title.trim() || `AXT Presen'it! — ${entry.route}`;
+        const title = deckTitle(deck.config, entry.route);
         const slides = rendered.slides
             .map((slide) => rewrite(slide.html, entry, dependencies))
             .join("\n");
@@ -190,6 +209,40 @@ export function presenit(options: PresenitOptions = {}): Plugin {
         for (const environment of Object.values(server.environments))
             for (const [id, module] of environment.moduleGraph.idToModuleMap)
                 if (id.startsWith(prefix)) environment.moduleGraph.invalidateModule(module);
+    }
+    function readMetadata(entry: Entry, markdown: string): DeckMetadata {
+        return deckMetadata(markdown, {
+            route: entry.route,
+            source: slash(path.relative(root, entry.source)),
+        });
+    }
+    async function decksModule(watch: (file: string) => void): Promise<string> {
+        await discovered;
+        const items: DeckMetadata[] = [];
+        for (const entry of entries) {
+            watch(entry.source);
+            let markdown: string;
+            try {
+                markdown = await readFile(entry.source, "utf8");
+            } catch (error) {
+                // Removed before the watcher rediscovered the decks.
+                if ((error as NodeJS.ErrnoException).code === "ENOENT") continue;
+                throw error;
+            }
+            let cached = metadata.get(entry.source);
+            if (cached?.markdown !== markdown) {
+                cached = { markdown, value: readMetadata(entry, markdown) };
+                metadata.set(entry.source, cached);
+            }
+            items.push(cached.value);
+        }
+        return decksModuleCode(items, config.base);
+    }
+    function invalidateDecks(server: ViteDevServer): void {
+        for (const environment of Object.values(server.environments)) {
+            const module = environment.moduleGraph.getModuleById(RESOLVED_DECKS_ID);
+            if (module) environment.moduleGraph.invalidateModule(module);
+        }
     }
     function virtualURL(id: string): string {
         if (id.startsWith("\0")) return id.slice(1);
@@ -238,13 +291,22 @@ export function presenit(options: PresenitOptions = {}): Plugin {
                     throw new Error("[presenit] Public HTML route already exists: " + entry.route);
             }
         },
-        resolveId(id) {
+        async resolveId(id, importer) {
+            if (id === DECKS_ID || id === DECKS_PACKAGE_ID || DECKS_STUBS.includes(slash(id)))
+                return RESOLVED_DECKS_ID;
+            // The package may be installed under another name (an alias or a jsr: specifier).
+            if (id.endsWith("/decks") && !id.startsWith(".") && !path.isAbsolute(id)) {
+                const resolved = await this.resolve(id, importer, { skipSelf: true });
+                if (resolved && DECKS_STUBS.includes(slash(resolved.id.split("?")[0]!)))
+                    return RESOLVED_DECKS_ID;
+            }
             if (id.split("?")[0] === JS_URL || id.split("?")[0] === CSS_URL || id.startsWith(THEME))
                 return "\0" + id;
             return entries.find((entry) => entry.id === slash(id))?.id;
         },
         async load(id) {
             const url = virtualURL(id).split("?")[0]!;
+            if (id === RESOLVED_DECKS_ID) return decksModule((file) => this.addWatchFile(file));
             if (url === JS_URL) return viewerJs;
             if (url === CSS_URL) return viewerCss;
             const entry = entries.find((item) => item.id === slash(id) || themeURL(item) === url);
@@ -252,6 +314,32 @@ export function presenit(options: PresenitOptions = {}): Plugin {
             const output = await document(entry);
             for (const file of output.dependencies) this.addWatchFile(file);
             return url.startsWith(THEME) ? output.css : output.html;
+        },
+        /**
+         * `addWatchFile` links each Markdown file to the decks module, but Vite would
+         * only soft-invalidate the importer and then reload every page. Replace that
+         * link with a real update of the decks module, and only when the deck's
+         * metadata changed, so ordinary slide edits do not reload list pages.
+         * Additions and removals are handled by the watcher in configureServer.
+         */
+        async hotUpdate({ type, file, modules, read }) {
+            if (type !== "update") return;
+            const entry = entries.find((item) => item.source === slash(file));
+            const decks = this.environment.moduleGraph.getModuleById(RESOLVED_DECKS_ID);
+            if (!entry || !decks) return;
+            const others = modules.filter(
+                (module) =>
+                    module.id !== entry.source ||
+                    [...module.importers].some((importer) => importer !== decks),
+            );
+            const previous = metadata.get(entry.source)?.value;
+            const next = readMetadata(entry, await read());
+            if (previous && JSON.stringify(previous) === JSON.stringify(next)) return others;
+            return [...others, decks];
+        },
+        renderChunk(code, chunk) {
+            const replaced = replaceRelativeBase(code, chunk.fileName);
+            return replaced === null ? null : { code: replaced, map: null };
         },
         configureServer(server) {
             server.watcher.add(sourceRoot);
@@ -264,6 +352,7 @@ export function presenit(options: PresenitOptions = {}): Plugin {
                             entries = await discover();
                             documents.clear();
                             invalidateThemes(server);
+                            invalidateDecks(server);
                             server.ws.send({ type: "full-reload" });
                             return;
                         }
@@ -287,6 +376,7 @@ export function presenit(options: PresenitOptions = {}): Plugin {
                             err: { message: String(error), stack: "" },
                         });
                     });
+                discovered = pending;
             };
             server.watcher.on("all", changed);
             server.httpServer?.once("close", () => server.watcher.off("all", changed));

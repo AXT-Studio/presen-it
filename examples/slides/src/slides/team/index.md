@@ -1,5 +1,6 @@
 ---
 title: Team update
+description: darkテーマの短いデッキ
 theme: dark
 hue: 280
 ---

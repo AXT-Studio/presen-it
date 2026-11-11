@@ -1,0 +1,53 @@
+:root {
+    color-scheme: light dark;
+    font-family: system-ui, sans-serif;
+}
+body {
+    margin: 0;
+    background: light-dark(#f6f7f9, #15171b);
+    color: light-dark(#1d2129, #e6e8ec);
+}
+main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 32px 16px;
+}
+.decks {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+    padding: 0;
+    list-style: none;
+}
+.deck {
+    position: relative;
+    padding: 16px;
+    border-radius: 12px;
+    background: light-dark(#fff, #1f2228);
+    border-top: 6px solid oklch(0.65 0.15 var(--hue));
+}
+.deck::before {
+    content: "";
+    display: block;
+    aspect-ratio: var(--ratio);
+    margin-bottom: 12px;
+    border-radius: 6px;
+    background: oklch(0.95 0.03 var(--hue));
+}
+.deck[data-theme="dark"]::before {
+    background: oklch(0.25 0.04 var(--hue));
+}
+.deck h2 {
+    margin: 0 0 4px;
+    font-size: 1.1rem;
+}
+.deck a::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+}
+.meta {
+    margin: 0;
+    font-size: 0.85rem;
+    opacity: 0.7;
+}

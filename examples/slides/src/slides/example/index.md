@@ -1,5 +1,6 @@
 ---
 title: Presen'it! v2
+description: Reveal、カラム、リッチコンテンツを一通り試すデモ
 footer: AXT Presen'it!
 fontFamily:
     sans: [system-ui, sans-serif]

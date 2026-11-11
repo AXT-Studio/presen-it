@@ -16,6 +16,19 @@ src/talk.md -> /talk/. Default includes is src/**/index.md. Existing HTML entrie
 Relative images resolve from Markdown; selected Markdown links become Viewer routes.
 Vite base supports subpath and relative deployment. Copy all of dist when hosting.
 
+Deck list for app code (no list page is generated):
+
+```ts
+import { decks } from "virtual:presenit/decks"; // same module: "@ayaexptech/presen-it/decks"
+// decks: readonly PresenitDeck[], ordered by Markdown path. Each has
+// url (with Vite base; full URL when base is "./"), route, source, title (Viewer <title>),
+// description, slideCount, theme, hue, width, height, frontmatter (raw YAML mapping, incl. unknown keys).
+```
+
+Types: import from @ayaexptech/presen-it/decks directly, or add to a project .d.ts
+`declare module "virtual:presenit/decks" { export * from "@ayaexptech/presen-it/decks"; }`
+(JSR cannot ship ambient declarations). Throws outside Vite with presenit(). Dev updates on add/remove/edit.
+
 ### slide.md YAML frontmatter (slide's settings)
 
 The values ​​in the following examples represent default values.

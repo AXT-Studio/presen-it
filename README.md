@@ -73,6 +73,56 @@ presenit({
 相対画像はMarkdownファイル基準で解決し、選択済みMarkdown同士の相対リンクはViewerのURLへ変換します。
 `public`内のアセットはViteの通常の規約で利用できます。URLや既存HTMLとの衝突はエラーです。
 
+### デッキ一覧を取得する
+
+`virtual:presenit/decks`から、選択されたデッキのメタデータを通常のアプリのコードでimportできます。
+一覧ページそのものは生成しないため、表示はアプリ側で自由に作れます。
+
+```ts
+// src/main.ts
+import { decks } from "virtual:presenit/decks";
+
+for (const deck of decks) {
+    console.log(deck.title, deck.url, deck.slideCount);
+}
+```
+
+型は`@ayaexptech/presen-it/decks`が持っています。JSRはアンビエントモジュール宣言を配布できないため、
+仮想モジュールの型はプロジェクト側の`.d.ts`で次のようにつなぎます。
+
+```ts
+// src/env.d.ts
+declare module "virtual:presenit/decks" {
+    export * from "@ayaexptech/presen-it/decks";
+}
+```
+
+`import { decks } from "@ayaexptech/presen-it/decks"`と書いても同じモジュールになり、この宣言は不要です。
+どちらもプラグインが生成するため、`presenit()`を設定したViteの外ではimportできません（例外を投げます）。
+
+| プロパティ | 型 | 内容 |
+| --- | --- | --- |
+| `url` | `string` | ViewerのURL（Viteの`base`込み、`/`終わり）。例: `/demo/slides/example/` |
+| `route` | `string` | `base`を除いたURL。例: `/slides/example/`。一意なのでkeyに使えます |
+| `source` | `string` | Vite root基準のMarkdownパス。例: `src/slides/example/index.md` |
+| `title` | `string` | Viewerの`<title>`と同じ値（未設定時は`AXT Presen'it! — <route>`） |
+| `description` | `string` | frontmatterの`description`（未設定時は`""`） |
+| `slideCount` | `number` | スライド（ページ）数 |
+| `theme` / `hue` | `"light" \| "dark"` / `number` | 正規化済みのテーマと色相 |
+| `width` / `height` | `number` | スライドの寸法（px）。サムネイルの縦横比などに |
+| `frontmatter` | `Record<string, unknown>` | 書かれたままのfrontmatter（JSON互換値）。`date`や`tags`など独自キーも含む |
+
+- 並び順はMarkdownのパス順です。必要ならアプリ側で並べ替えてください。
+- 値はViewerと同じパーサーで読み取ります。frontmatterや記法の意味は変わりません。
+  未知のキーは従来どおりViewerでは無視され、`frontmatter`からだけ参照できます。
+- `url`は`base: "/project/"`やURLのbaseを含みます。`base: "./"`のビルドでは、
+  Viteのアセットと同様にバンドルされたJSの位置から解決した完全なURLになります。
+- devではMarkdownの追加・削除で再読込し、編集ではメタデータが変わったときだけ、
+  このモジュールを使うページを更新します（`import.meta.hot.accept`で受け取ることもできます）。
+- importしたアプリのJSには、全デッキの`frontmatter`がそのまま含まれます。公開したくない値は書かないでください。
+
+[examples/slides](./examples/slides/)の`index.html`と`src/main.ts`が一覧ページの例です。
+
 ## Markdownの記法
 
 ### Frontmatter
@@ -275,7 +325,7 @@ pnpm test:integration
 pnpm check:jsr
 ```
 
-サンプルURLは`/slides/example/`と`/slides/team/`です。
+サンプルURLは`/slides/example/`と`/slides/team/`、デッキ一覧の利用例は`/`です。
 `build`はViewerをJS/CSS文字列のTSモジュールへ生成し、プラグインのJSと型定義を`dist/`へ出力します。
 生成した`src/generated/viewer.ts`をコミットするため、JSR利用者に追加のビルド工程を要求しません。
 ブラウザ試験はChrome/Chromiumが必要です。自動検出できない場合は`CHROME_PATH`を指定します。
