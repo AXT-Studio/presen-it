@@ -1,0 +1,14 @@
+{
+    "name": "presenit-poc-example",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite --host 127.0.0.1 --open /slides/intro.html",
+        "build": "vite build",
+        "preview": "vite preview --host 127.0.0.1 --open /slides/intro.html"
+    },
+    "devDependencies": {
+        "@ayaexptech/presenit": "file:../..",
+        "vite": "8.1.5"
+    }
+}

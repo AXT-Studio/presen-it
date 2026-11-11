@@ -1,0 +1,35 @@
+{
+    "name": "@ayaexptech/presenit",
+    "version": "0.0.0-poc",
+    "private": true,
+    "license": "MIT",
+    "type": "module",
+    "exports": "./mod.ts",
+    "scripts": {
+        "dev": "vite examples/minimal --host 127.0.0.1",
+        "build": "vite build examples/minimal",
+        "preview": "vite preview examples/minimal --host 127.0.0.1",
+        "typecheck": "tsc --noEmit",
+        "test": "node --experimental-strip-types --test tests/integration.test.ts",
+        "check:jsr": "deno publish --dry-run --allow-dirty"
+    },
+    "dependencies": {
+        "rehype-sanitize": "^6.0.0",
+        "rehype-stringify": "^10.0.1",
+        "remark-parse": "^11.0.0",
+        "remark-rehype": "^11.1.2",
+        "unified": "^11.0.5"
+    },
+    "devDependencies": {
+        "@types/node": "^24.13.3",
+        "puppeteer-core": "^25.4.0",
+        "typescript": "^5.9.3",
+        "vite": "8.1.5"
+    },
+    "peerDependencies": {
+        "vite": "^8.1.5"
+    },
+    "engines": {
+        "node": ">=22.18.0"
+    }
+}
