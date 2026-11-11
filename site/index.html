@@ -1,110 +1,168 @@
 <!doctype html>
 <html lang="ja">
     <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>AyaExpTech Presen'it! — Markdown から美しいスライドへ</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>AXT Presen'it! — Markdownから、発表まで。</title>
         <meta
             name="description"
-            content="通常の Markdown を、少ない宣言だけで読みやすいプレゼンスライドと PDF に。npm の @ayaexptech/presenit。"
+            content="Markdownにコメントを少し足すだけで、発表用のスライドとビューワーができるViteプラグイン。発表者ビュー、Reveal、PDF保存まで。"
         />
-        <meta property="og:title" content="AyaExpTech Presen'it!" />
-        <meta property="og:description" content="Markdown から美しいプレゼンスライドと PDF を。" />
+        <meta property="og:title" content="AXT Presen'it!" />
+        <meta
+            property="og:description"
+            content="Markdownから、発表まで。いつものViteプロジェクトでスライドを書くプラグイン。"
+        />
         <meta property="og:type" content="website" />
+        <meta name="color-scheme" content="light dark" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
-            href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=M+PLUS+1:wght@400;500;600;700&display=swap"
             rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=M+PLUS+1:wght@400;500;700&family=M+PLUS+1+Code:wght@400;500&display=swap"
         />
         <link rel="stylesheet" href="./styles.css" />
     </head>
     <body>
-        <div class="wash" aria-hidden="true"></div>
-
         <header class="top">
-            <a class="top__brand" href="./">AXT Presen'it!</a>
-            <nav class="top__nav" aria-label="外部リンク">
-                <a href="https://www.npmjs.com/package/@ayaexptech/presenit">npm</a>
-                <a href="https://github.com/AXT-Studio/presen-it">GitHub</a>
+            <a class="brand" href="./">AXT Presen'it!</a>
+            <nav class="top-nav" aria-label="リンク">
                 <a href="https://github.com/AXT-Studio/presen-it#readme">README</a>
+                <a href="https://jsr.io/@ayaexptech/presen-it">JSR</a>
+                <a href="https://github.com/AXT-Studio/presen-it">GitHub</a>
             </nav>
         </header>
 
         <main>
-            <section class="hero">
-                <p class="hero__brand">AyaExpTech Presen'it!</p>
-                <h1 class="hero__title">Markdown のまま、<br />登壇に耐えるスライドへ。</h1>
-                <p class="hero__lede">
-                    読み物として自然な単一ファイルを、少ない宣言だけで組版。投影・Presenter・PDF
-                    まで一つのツールで。
-                </p>
-                <div class="hero__actions">
-                    <a class="btn btn--primary" href="#install">使い始める</a>
-                    <a class="btn btn--ghost" href="https://github.com/AXT-Studio/presen-it"
-                        >GitHub リポジトリ</a
+            <section class="hero" aria-labelledby="hero-title">
+                <div class="stage">
+                    <div class="slide">
+                        <div class="slide-body">
+                            <p class="slide-kicker">Vite plugin for Markdown presentations</p>
+                            <h1 id="hero-title">Markdownから、<wbr />発表まで。</h1>
+                            <p class="slide-lede">
+                                いつものViteプロジェクトでMarkdownを書くだけ。<wbr />スライドと発表用ビューワーができあがります。
+                            </p>
+                        </div>
+                        <p class="slide-footer" aria-hidden="true">AXT Presen'it!</p>
+                        <p class="slide-number" aria-hidden="true">1 / 3</p>
+                    </div>
+                    <!-- Decorative copy of the Viewer's floating toolbar. -->
+                    <div class="toolbar" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" /></svg>
+                        <span class="position"
+                            ><span>1 / 3</span
+                            ><span class="dots"><i class="on"></i><i></i><i></i></span
+                        ></span>
+                        <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" /></svg>
+                        <span class="separator"></span>
+                        <svg viewBox="0 0 24 24">
+                            <rect x="4" y="4" width="6.5" height="6.5" rx="1.5" />
+                            <rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5" />
+                            <rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5" />
+                            <rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5" />
+                        </svg>
+                        <svg class="optional" viewBox="0 0 24 24">
+                            <path d="M3.5 20.5l5-5" stroke-width="3.4" />
+                            <path d="M11 13l4-4" stroke-dasharray="1.6 2.4" />
+                            <circle cx="18" cy="6" r="2.6" class="fill" />
+                        </svg>
+                        <svg class="optional" viewBox="0 0 24 24">
+                            <path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" />
+                        </svg>
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="12" cy="5.5" r="1.6" class="fill" />
+                            <circle cx="12" cy="12" r="1.6" class="fill" />
+                            <circle cx="12" cy="18.5" r="1.6" class="fill" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="actions">
+                    <a class="button primary" href="https://jsr.io/@ayaexptech/presen-it"
+                        >JSRで入手</a
+                    >
+                    <a class="button" href="https://github.com/AXT-Studio/presen-it#readme"
+                        >READMEを読む</a
                     >
                 </div>
             </section>
 
-            <section class="install" id="install">
-                <h2>Install</h2>
-                <p class="install__note">Node.js ≥ 22 · プロジェクトに入れて使うだけ</p>
-                <pre class="code"><code>pnpm add -D @ayaexptech/presenit
-pnpm exec presenit init my-talk
-pnpm exec presenit dev my-talk</code></pre>
-                <p class="install__more">
-                    詳細な frontmatter・ディレクティブ・ショートカットは
-                    <a href="https://github.com/AXT-Studio/presen-it#readme">README</a>
-                    が正本です。
-                </p>
+            <section class="section" aria-labelledby="start-title">
+                <h2 id="start-title">3ステップではじめる</h2>
+                <ol class="steps">
+                    <li class="card">
+                        <h3><span class="step">1</span>追加する</h3>
+                        <pre><code>pnpm add -D jsr:@ayaexptech/presen-it</code></pre>
+                        <p>Vite+なら <code>vp add jsr:@ayaexptech/presen-it</code></p>
+                    </li>
+                    <li class="card">
+                        <h3><span class="step">2</span>設定する</h3>
+                        <pre><code><span class="muted">// vite.config.ts</span>
+import { defineConfig } from "vite";
+import presenit from "@ayaexptech/presen-it";
+
+export default defineConfig({
+  plugins: [presenit()],
+});</code></pre>
+                    </li>
+                    <li class="card">
+                        <h3><span class="step">3</span>書いて、開く</h3>
+                        <pre><code><span class="muted"># src/slides/talk/index.md</span>
+# はじめに
+
+<span class="muted">&lt;!-- presen-it! slide-break --&gt;</span>
+
+## 少しずつ、伝える</code></pre>
+                        <p><code>vite</code> を起動して <code>/slides/talk/</code> を開くだけ。</p>
+                    </li>
+                </ol>
             </section>
 
-            <section class="keys">
-                <h2>投影の操作（要約）</h2>
-                <ul class="keys__list">
+            <section class="section" aria-labelledby="features-title">
+                <h2 id="features-title">発表に必要なものは、ひと通り</h2>
+                <ul class="features">
                     <li>
-                        <kbd>←</kbd> <kbd>→</kbd> 前後 · <kbd>P</kbd> Presenter ·
-                        <kbd>O</kbd> Overview
+                        <h3>Markdownのまま</h3>
+                        <p>
+                            コメント形式のディレクティブだけで改ページ・段組み・段階表示。読み物としても自然です。
+                        </p>
                     </li>
                     <li>
-                        <kbd>B</kbd> ブラックアウト · <kbd>L</kbd> レーザー ·
-                        <kbd>F</kbd> フルスクリーン
-                    </li>
-                    <li>左下ホバーでツールバー（Presenter / Laser など）</li>
-                </ul>
-            </section>
-
-            <section class="links">
-                <h2>リンク</h2>
-                <ul class="links__list">
-                    <li>
-                        <a href="https://www.npmjs.com/package/@ayaexptech/presenit"
-                            >npm — @ayaexptech/presenit</a
-                        >
+                        <h3>スライドが主役</h3>
+                        <p>画面いっぱいの投影表示。操作バーは必要なときだけ現れます。</p>
                     </li>
                     <li>
-                        <a href="https://github.com/AXT-Studio/presen-it"
-                            >GitHub — AXT-Studio/presen-it</a
-                        >
+                        <h3>発表者ビュー</h3>
+                        <p>
+                            ノート・次の表示・タイマー。別タブの投影画面とページやRevealが同期します。
+                        </p>
                     </li>
                     <li>
-                        <a href="https://github.com/AXT-Studio/presen-it#readme"
-                            >README（フル仕様）</a
-                        >
+                        <h3>本番のための機能</h3>
+                        <p>
+                            スライド一覧、レーザーポインター、ブラックアウト、プレゼンリモコン対応。
+                        </p>
                     </li>
                     <li>
-                        <a
-                            href="https://github.com/AXT-Studio/presen-it/blob/main/docs/1.0-scope.md"
-                            >1.0 スコープ / SemVer</a
-                        >
+                        <h3>コード・数式・図</h3>
+                        <p>Shikiのハイライト、KaTeX、Mermaid、GitHub形式のAlertsに対応。</p>
+                    </li>
+                    <li>
+                        <h3>そのまま公開・PDF</h3>
+                        <p>
+                            静的ファイルとしてビルドしてデプロイ。ブラウザの印刷からPDFとして保存できます。
+                        </p>
                     </li>
                 </ul>
             </section>
         </main>
 
         <footer class="foot">
-            <p>AXT Presen'it! · MIT · <a href="https://github.com/AyaExpTech">@AyaExpTech</a></p>
+            <p>
+                AXT Presen'it! · MIT License ·
+                <a href="https://github.com/AXT-Studio/presen-it">GitHub</a> ·
+                <a href="https://jsr.io/@ayaexptech/presen-it">JSR</a>
+            </p>
         </footer>
     </body>
 </html>
