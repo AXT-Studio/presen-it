@@ -13,4 +13,4 @@ The previous npm package was `@ayaexptech/presenit` (formerly `@axt_ayakoto/pres
 3. Keep `package.json` and `jsr.json` names/versions consistent. `src/pkg.ts` belonged to v1 and no longer exists.
 4. Build and commit `src/generated/viewer.ts` when changing Viewer sources; see `docs/development.md` and `docs/publishing.md`.
 
-`.github/workflows/release.yml` is a manual verification workflow and does not publish.
+`.github/workflows/release.yml` publishes to JSR when a `v*` tag is pushed. Manual dispatch dry-runs unless `dry_run` is false. Do not push a release tag or dispatch a real publish without an explicit request.

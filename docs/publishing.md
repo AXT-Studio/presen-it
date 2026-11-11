@@ -1,7 +1,7 @@
 # 公開手順
 
 パッケージ名・import名は`@ayaexptech/presen-it`（[JSR](https://jsr.io/@ayaexptech/presen-it)）。
-旧npmパッケージ`@ayaexptech/presenit`（v1）とは別物です。公開は所有者が明示的に行い、CIは公開しません。
+旧npmパッケージ`@ayaexptech/presenit`（v1）とは別物です。公開は`v*`タグのpush、または手動実行でdry-runを外したときだけ行います。
 
 ## 公開物の構成
 
@@ -30,7 +30,7 @@ tarballを空のプロジェクトへnpm installしてVite・Vite+の操作を�
 1. `package.json`と`jsr.json`のversionを更新し、`CHANGELOG.md`へ記載する
    （プレリリースは`2.0.0-rc.1`のようなSemVer形式）。
 2. 上記の確認を通してコミットする。
-3. `deno publish`（または`npx jsr publish`）で公開する。手動の検証用に`.github/workflows/release.yml`もある（公開はしない）。
+3. そのversionの`v*`タグ（例: `v2.0.0-rc.1`）をpushする。`.github/workflows/release.yml`がタグから`jsr.json`のversionを合わせて`npx jsr publish`する。手元確認は同じworkflowの手動実行で、既定は`--dry-run`。
 4. 別の空プロジェクトで`pnpm add -D jsr:@ayaexptech/presen-it`（Vite+は`vp add`）を行い、dev/build/previewを確認する。
 
 Vite+プロジェクトでは公式テンプレートのVite core alias/overrideを使います。

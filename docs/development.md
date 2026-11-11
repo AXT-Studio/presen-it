@@ -9,7 +9,7 @@ Markdown・Vite設定・通常のパッケージ設定だけです。ViewerのHT
 
 ## 環境とコマンド
 
-- Node.js 22.18以上、pnpm 11.11.0（`packageManager`とCIで固定）。Vite 8・Vite+ 1.6で検証。
+- Node.js 22.18以上、pnpm 11.11.0（`packageManager`で固定）。Vite 8・Vite+ 1.6で検証。
 - `pnpm check:jsr`にはDeno、結合試験にはChrome/Chromium・npm・ネットワークが必要です。
   Chromeを自動検出できない場合は`CHROME_PATH=/path/to/chrome`を指定します。
 

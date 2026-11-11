@@ -1,24 +1,122 @@
-name: Verify JSR package
-# This workflow never publishes. Registry publication needs explicit authorization.
+name: Publish to JSR
+
 on:
-    workflow_dispatch:
-permissions:
-    contents: read
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Tag name that starts with v (example: v1.0.0-alpha.1)"
+        required: true
+        type: string
+      dry_run:
+        description: "Run jsr publish with --dry-run"
+        required: false
+        default: true
+        type: boolean
+
 jobs:
-    verify:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
-            - uses: pnpm/action-setup@v4
-              with:
-                  version: 11.11.0
-            - uses: actions/setup-node@v4
-              with:
-                  node-version: 22
-            - uses: denoland/setup-deno@v2
-              with:
-                  deno-version: v2.x
-            - run: pnpm install --frozen-lockfile
-            - run: pnpm build
-            - run: pnpm check
-            - run: pnpm check:jsr
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Resolve TAG_NAME and SEMVER
+        id: resolve_version
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_TAG_NAME: ${{ inputs.tag_name }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            TAG_NAME="$INPUT_TAG_NAME"
+          else
+            TAG_NAME="$REF_NAME"
+          fi
+
+          if [[ ! "$TAG_NAME" =~ ^v ]]; then
+            echo "TAG_NAME must start with 'v': $TAG_NAME"
+            exit 1
+          fi
+
+          SEMVER="${TAG_NAME#v}"
+          SEMVER_REGEX='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-((0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$'
+
+          if [[ ! "$SEMVER" =~ $SEMVER_REGEX ]]; then
+            echo "SEMVER is invalid: $SEMVER"
+            echo "Example of valid values: 1.0.1, 0.9.0-alpha.1, 1.0.0+build.1"
+            exit 1
+          fi
+
+          echo "TAG_NAME=$TAG_NAME" >> "$GITHUB_ENV"
+          echo "SEMVER=$SEMVER" >> "$GITHUB_ENV"
+          echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
+          echo "semver=$SEMVER" >> "$GITHUB_OUTPUT"
+
+          echo "TAG_NAME=$TAG_NAME"
+          echo "SEMVER=$SEMVER"
+
+      - name: Update jsr.json version from SEMVER
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          const filePath = "jsr.json";
+          const semver = process.env.SEMVER;
+          const source = fs.readFileSync(filePath, "utf8");
+          const pattern = /"version"\s*:\s*"[^"]+"/;
+
+          if (!pattern.test(source)) {
+            console.error("Could not find version field in jsr.json");
+            process.exit(1);
+          }
+
+          const updated = source.replace(pattern, `"version": "${semver}"`);
+          fs.writeFileSync(filePath, updated);
+          NODE
+
+          echo "Updated jsr.json version to $SEMVER"
+          grep -n '"version"' jsr.json
+
+      - name: Commit updated jsr.json locally
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "AXT-AyaKoto"
+          git config user.email "148830788+AXT-AyaKoto@users.noreply.github.com"
+
+          git add jsr.json
+
+          if git diff --cached --quiet; then
+            echo "No staged changes in jsr.json; skipping local commit."
+          else
+            git commit -m "chore(ci): sync jsr version to $SEMVER for publish"
+            echo "Created local commit to keep worktree clean."
+            git --no-pager log -1 --oneline
+          fi
+
+      - name: Publish package to JSR
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.dry_run) }}
+        run: npx jsr publish
+
+      - name: Publish package to JSR (dry-run)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        run: npx jsr publish --dry-run
