@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
-        "target": "ES2022",
-        "lib": ["ES2022", "DOM", "DOM.Iterable"],
+        "target": "esnext",
+        "lib": ["ESNext", "DOM", "DOM.Iterable"],
         "module": "ESNext",
         "moduleResolution": "Bundler",
         "resolveJsonModule": true,
@@ -16,6 +16,7 @@
         "skipLibCheck": true,
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
+        "erasableSyntaxOnly": true,
         "jsx": "preserve",
         "types": ["node"],
         // Lets examples import the package by name, as applications do.
