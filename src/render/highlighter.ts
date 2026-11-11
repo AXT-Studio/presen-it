@@ -1,5 +1,5 @@
 import { getSingletonHighlighter, type BundledLanguage } from "shiki";
-import type { ThemeName } from "../types";
+import type { ThemeName } from "../types.ts";
 
 const LIGHT_THEME = "github-light";
 const DARK_THEME = "github-dark";

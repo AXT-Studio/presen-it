@@ -7,9 +7,9 @@ import type {
     PageTransitionConfig,
     PageTransitionType,
     ThemeName,
-} from "../types";
-import { DEFAULT_CONFIG } from "../types";
-import { fontFamilyListToCss } from "../font-family";
+} from "../types.ts";
+import { DEFAULT_CONFIG } from "../types.ts";
+import { fontFamilyListToCss } from "../font-family.ts";
 import { parse as parseYaml } from "yaml";
 
 export type FrontmatterResult = {

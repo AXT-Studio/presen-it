@@ -1,0 +1,9 @@
+{
+    "name": "@ayaexptech/presen-it",
+    "version": "2.0.0",
+    "exports": "./mod.ts",
+    "publish": {
+        "include": ["mod.ts", "src/**/*.ts", "README.md", "llms.txt", "LICENSE"],
+        "exclude": ["src/client/**"]
+    }
+}

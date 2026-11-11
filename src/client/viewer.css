@@ -1,0 +1,305 @@
+:root {
+    font-family: system-ui, sans-serif;
+    color: #24272c;
+    background: #eceef1;
+}
+body {
+    margin: 0;
+}
+button,
+summary {
+    font: inherit;
+    cursor: pointer;
+}
+button {
+    color: inherit;
+    border: 1px solid #c6cad0;
+    border-radius: 0.3rem;
+    background: white;
+    padding: 0.5rem 0.8rem;
+}
+button:hover,
+summary:hover {
+    background: #e5edf8;
+}
+button:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+:focus-visible {
+    outline: 3px solid #2463b5;
+    outline-offset: 3px;
+}
+[hidden] {
+    display: none !important;
+}
+.presenit-layout {
+    display: flex;
+    height: calc(100dvh - 64px);
+    min-height: 160px;
+}
+#presenit-stage {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.presenit-ready #presenit-stage .presenit-deck {
+    width: var(--presenit-scaled-width);
+    height: var(--presenit-scaled-height);
+    position: relative;
+    background: transparent;
+}
+.presenit-ready #presenit-stage .presenit-slide {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform: scale(var(--presenit-scale));
+    transform-origin: top left;
+}
+.presenit-ready #presenit-stage .presenit-slide:not(.is-current) {
+    display: none;
+}
+.presenit-toolbar {
+    position: fixed;
+    bottom: 0;
+    inset-inline: 0;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    background: #fff;
+    border-top: 1px solid #c6cad0;
+    box-sizing: border-box;
+    z-index: 20;
+}
+.presenit-counter {
+    min-width: 8.5rem;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.9rem;
+}
+.presenit-menu {
+    position: relative;
+}
+.presenit-menu summary {
+    padding: 0.5rem 0.6rem;
+}
+.presenit-menu-actions {
+    position: absolute;
+    bottom: 3rem;
+    right: 0;
+    width: max-content;
+    display: grid;
+    gap: 0.3rem;
+    background: white;
+    padding: 0.6rem;
+    border: 1px solid #c6cad0;
+    border-radius: 0.4rem;
+    box-shadow: 0 0.5rem 2rem #0002;
+}
+.presenit-menu-actions button {
+    text-align: left;
+}
+button[aria-pressed="true"] {
+    background: #dceafd;
+    border-color: #2463b5;
+}
+.presenit-presenter {
+    width: 26%;
+    min-width: 260px;
+    overflow: auto;
+    padding: 1.25rem;
+    box-sizing: border-box;
+    background: white;
+}
+.presenit-ui-title {
+    font-size: 1rem;
+    margin: 0 0 0.5rem;
+    font-weight: 600;
+}
+.presenit-timer {
+    display: block;
+    font-size: 2.5rem;
+    font-variant-numeric: tabular-nums;
+}
+.presenit-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+.presenit-presenter h2 {
+    font-size: 0.9rem;
+    margin-top: 1.5rem;
+}
+.presenit-preview {
+    width: 100%;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    background: #eceef1;
+}
+.presenit-preview > .presenit-slide,
+.presenit-thumb > .presenit-slide {
+    transform: scale(var(--presenit-scale));
+    transform-origin: top left;
+    pointer-events: none;
+}
+.presenit-notes {
+    white-space: pre-wrap;
+    line-height: 1.65;
+}
+.presenit-overview {
+    border: 0;
+    border-radius: 0.5rem;
+    width: min(1100px, 90vw);
+    max-height: 85dvh;
+    padding: 1.2rem;
+    color: #24272c;
+    background: #f8f9fb;
+}
+.presenit-overview::backdrop {
+    background: #141923b3;
+}
+.presenit-overview header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.presenit-overview h2 {
+    font-size: 1.2rem;
+}
+.presenit-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+}
+.presenit-grid > button {
+    text-align: left;
+    padding: 0.5rem;
+    overflow: hidden;
+}
+.presenit-thumb {
+    width: 100%;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+.presenit-thumb .is-concealed {
+    visibility: visible;
+    opacity: 1;
+}
+.presenit-blackout {
+    position: fixed;
+    inset: 0;
+    background: black;
+    z-index: 15;
+}
+.presenit-laser {
+    position: fixed;
+    width: 12px;
+    height: 12px;
+    background: #e72e39;
+    border: 2px solid white;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #e72e39;
+    translate: -50% -50%;
+    z-index: 30;
+    pointer-events: none;
+}
+.presenit-status {
+    position: fixed;
+    left: 1rem;
+    bottom: 65px;
+    font-size: 0.85rem;
+    background: white;
+    max-width: 32rem;
+    z-index: 21;
+}
+.presenit-status:empty {
+    display: none;
+}
+.presenit-slide [data-presenit-at] {
+    transition: opacity var(--presenit-fragment-duration, 0.3s) ease;
+}
+.presenit-slide .is-concealed {
+    visibility: hidden;
+    opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+    .presenit-slide [data-presenit-at] {
+        transition: none;
+    }
+}
+@media (max-width: 700px) {
+    .is-presenter .presenit-layout {
+        flex-direction: column;
+        overflow: auto;
+    }
+    .is-presenter #presenit-stage {
+        min-height: 42dvh;
+    }
+    .presenit-presenter {
+        width: 100%;
+        min-width: 0;
+        overflow: visible;
+    }
+    .presenit-toolbar {
+        gap: 0.2rem;
+    }
+    button {
+        padding: 0.5rem;
+    }
+}
+@media print {
+    html,
+    body {
+        background: white !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .presenit-layout,
+    #presenit-stage {
+        display: block !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+    .presenit-ready #presenit-stage .presenit-deck {
+        width: auto;
+        height: auto;
+    }
+    .presenit-ready #presenit-stage .presenit-slide {
+        display: flex !important;
+        position: relative !important;
+        transform: none !important;
+        translate: none !important;
+        opacity: 1 !important;
+        margin: 0 !important;
+        border: 0 !important;
+        break-after: page;
+        break-inside: avoid;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+    #presenit-stage .presenit-slide:last-child {
+        break-after: auto;
+    }
+    .presenit-slide .is-concealed {
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    .presenit-toolbar,
+    .presenit-presenter,
+    .presenit-overview,
+    .presenit-status,
+    .presenit-laser,
+    .presenit-blackout,
+    noscript {
+        display: none !important;
+    }
+    .katex .katex-mathml {
+        display: none;
+    }
+}

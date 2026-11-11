@@ -1,7 +1,7 @@
-import type { Deck } from "../types";
-import { renderDeckHtml, renderDeckSlides, type RenderedSlide } from "./html";
-import { KATEX_CSS_URL } from "./rich";
-import { buildThemeCss } from "./theme";
+import type { Deck } from "../types.ts";
+import { renderDeckHtml, renderDeckSlides, type RenderedSlide } from "./html.ts";
+import { KATEX_CSS_URL } from "./rich.ts";
+import { buildThemeCss } from "./theme.ts";
 
 export type RenderDeckResult = {
     /** Full deck HTML fragment including embedded theme CSS. */
@@ -32,6 +32,6 @@ export async function renderDeckAsync(deck: Deck): Promise<RenderDeckResult> {
 /** @alias renderDeckAsync */
 export const renderDeck = renderDeckAsync;
 
-export { buildThemeCss } from "./theme";
-export { renderDeckHtml, renderDeckSlides, renderSlideHtml } from "./html";
-export type { RenderedSlide } from "./html";
+export { buildThemeCss } from "./theme.ts";
+export { renderDeckHtml, renderDeckSlides, renderSlideHtml } from "./html.ts";
+export type { RenderedSlide } from "./html.ts";
