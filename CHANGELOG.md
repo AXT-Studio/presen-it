@@ -9,6 +9,8 @@
   fixed text toolbar with an auto-hiding icon toolbar (mouse, keyboard focus, tap; swipe to navigate).
 - Viewer: cross-fade page transitions over the outgoing slide so no page background flashes through.
 - Print: disable transitions so Reveal content is never captured mid-fade.
+- Dev: invalidate every variant of the theme CSS module (including Vite's `?direct` link request) so
+  frontmatter changes such as `theme`, `hue` and `fontFamily` reach open slides after the reload.
 - Save PDFs through browser printing, with all Reveal steps and one slide per page.
 - Preserve Markdown/frontmatter/directive semantics and defaults; update only the fallback product title.
 - Verify Vite, Vite+, local tarball installation, consumer types, real authored slides and JSR dry-run.

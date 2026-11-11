@@ -238,7 +238,8 @@ button {
     border-left: 1px solid var(--presenit-ui-line);
 }
 .presenit-position {
-    min-width: 4.75rem;
+    /* Fixed size: the number and Reveal dots stay put from slide to slide. */
+    width: max(4.75rem, calc(var(--presenit-total-digits, 2) * 2ch + 2ch));
     padding: 0 6px;
     display: flex;
     flex-direction: column;
@@ -251,6 +252,7 @@ button {
     white-space: nowrap;
 }
 .presenit-steps {
+    height: 5px;
     display: flex;
     gap: 3px;
     align-items: center;
@@ -269,6 +271,7 @@ button {
 }
 .presenit-steps-text {
     font-size: 10px;
+    line-height: 5px;
 }
 
 /* Menu: a group of buttons in a popover above its trigger. */
@@ -652,7 +655,7 @@ kbd {
         padding: 3px;
     }
     .presenit-position {
-        min-width: 3.75rem;
+        width: max(3.75rem, calc(var(--presenit-total-digits, 2) * 2ch + 2ch));
         padding: 0 2px;
     }
     .presenit-separator {

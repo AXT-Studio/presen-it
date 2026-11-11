@@ -458,22 +458,28 @@ function playTransition(leaving: HTMLElement, entering: HTMLElement, direction: 
 }
 
 let shown = state.index;
+/**
+ * Reveal progress under the page number. One dot per view of the slide (the
+ * initial view plus each Reveal step), filled up to the current one, so a
+ * slide without Reveal shows a single filled dot and the number never moves.
+ */
 function renderSteps(): void {
     const max = maxStep(state.index);
     steps.dataset.step = String(state.step);
     steps.dataset.max = String(max);
-    steps.hidden = max === 0;
-    steps.replaceChildren(element("span", "presenit-sr", `、Reveal ${state.step} / ${max}`));
-    if (max === 0) return;
-    if (max > 10) {
-        steps.append(element("span", "presenit-steps-text", `${state.step}/${max}`));
-        steps.lastElementChild!.setAttribute("aria-hidden", "true");
+    steps.replaceChildren(
+        element("span", "presenit-sr", max ? `、Reveal ${state.step} / ${max}` : ""),
+    );
+    if (max >= 9) {
+        const text = element("span", "presenit-steps-text", `${state.step}/${max}`);
+        text.setAttribute("aria-hidden", "true");
+        steps.append(text);
         return;
     }
-    for (let step = 1; step <= max; step++) {
-        const pip = element("i", step <= state.step ? "is-on" : "");
-        pip.setAttribute("aria-hidden", "true");
-        steps.append(pip);
+    for (let view = 0; view <= max; view++) {
+        const dot = element("i", view <= state.step ? "is-on" : "");
+        dot.setAttribute("aria-hidden", "true");
+        steps.append(dot);
     }
 }
 function update(broadcast = true, animate = true): void {
@@ -866,6 +872,8 @@ window.addEventListener("pagehide", () => {
 });
 root.classList.toggle("is-presenter", presenter);
 root.style.setProperty("--presenit-aspect", `${config.width} / ${config.height}`);
+// Size the page number for the deck's longest value so the toolbar never shifts.
+root.style.setProperty("--presenit-total-digits", String(String(slides.length).length));
 root.style.setProperty("--presenit-fragment-duration", config.animation.duration + "s");
 root.style.setProperty("--presenit-anim-duration", config.animation.duration + "s");
 root.classList.add("presenit-ready");

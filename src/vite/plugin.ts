@@ -4,7 +4,7 @@ import path from "node:path";
 import { createRequire } from "node:module";
 import { glob } from "tinyglobby";
 import { parseFragment, serialize, type DefaultTreeAdapterMap } from "parse5";
-import type { Plugin, ResolvedConfig } from "vite";
+import type { Plugin, ResolvedConfig, ViteDevServer } from "vite";
 import { parseSlideMarkdown } from "../parse/index.ts";
 import { renderDeckAsync } from "../render/index.ts";
 import { viewerJs, viewerCss } from "../generated/viewer.ts";
@@ -180,6 +180,17 @@ export function presenit(options: PresenitOptions = {}): Plugin {
             );
         return documents.get(entry.source)!;
     }
+    /**
+     * Theme CSS is requested by a <link>, which Vite serves as a separate
+     * `?direct` module. Invalidate every variant so frontmatter changes
+     * (theme, hue, fonts, size) reach the slides after the reload.
+     */
+    function invalidateThemes(server: ViteDevServer, entry?: Entry): void {
+        const prefix = "\0" + (entry ? themeURL(entry) : THEME);
+        for (const environment of Object.values(server.environments))
+            for (const [id, module] of environment.moduleGraph.idToModuleMap)
+                if (id.startsWith(prefix)) environment.moduleGraph.invalidateModule(module);
+    }
     function virtualURL(id: string): string {
         if (id.startsWith("\0")) return id.slice(1);
         return id;
@@ -252,6 +263,7 @@ export function presenit(options: PresenitOptions = {}): Plugin {
                         if (file.endsWith(".md") && ["add", "unlink"].includes(event)) {
                             entries = await discover();
                             documents.clear();
+                            invalidateThemes(server);
                             server.ws.send({ type: "full-reload" });
                             return;
                         }
@@ -261,10 +273,7 @@ export function presenit(options: PresenitOptions = {}): Plugin {
                                 assetDependencies.get(entry.source)?.has(normalized)
                             ) {
                                 documents.delete(entry.source);
-                                const module = server.moduleGraph.getModuleById(
-                                    "\0" + themeURL(entry),
-                                );
-                                if (module) server.moduleGraph.invalidateModule(module);
+                                invalidateThemes(server, entry);
                                 server.ws.send({
                                     type: "full-reload",
                                     path: entry.route + "index.html",

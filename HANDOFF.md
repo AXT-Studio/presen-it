@@ -88,6 +88,8 @@ Markdown
 | `tests/` | 互換性・描画単体テスト、実CLI/ブラウザ/ローカル配布の結合試験 |
 
 HTMLはVite root内の**ファイル形状のID**で`resolveId`/`load`から供給し、Viteの標準HTMLビルドを通します。
+テーマCSSは`<link>`で読まれるため、devではViteが`?direct`付きの別モジュールとして扱います。
+Markdown変更時は`invalidateThemes()`でクエリ違いを含む全モジュールを無効化します（frontmatterの反映に必要）。
 JS/CSSは仮想モジュールです。devのHTMLは`server.transformIndexHtml`へ渡し、previewは通常の静的配信です。
 既存アプリのrootを専用Viewer rootへ変更しないでください。
 
@@ -211,6 +213,8 @@ Presenterと投影、全Revealの印刷、ノート/UIの印刷除外も再確�
   旧スライドは遷移完了まで表示され、Revealの状態も保持します。初回のPresenter同期・reduced motionでは省略。
 - **メニュー/ツールチップ**: Popover API。ツールチップは`popover="manual"`の単一要素で、
   ホバー（タッチ以外）とキーボードフォーカスに表示し、`aria-hidden`（名前は各ボタンの`aria-label`）。
+- **Revealの表示**: ページ番号の下の点は「最初の表示 + 各Revealステップ」の数（9段以上は`3/12`表記）。
+  Revealのないスライドも点1つを出し、位置表示の幅は総ページ数の桁で固定して、ボタン位置を動かさない。
 - **アイコン**: 依存を増やさないため、`viewer.ts`の`ICONS`に単純なSVGパスを自作して保持しています。
 - **印刷**: 操作UI一式を`display: none`にし、全要素の`transition`を無効化（Revealのフェード途中を印刷しない）。
 

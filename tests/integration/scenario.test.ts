@@ -459,13 +459,28 @@ export default defineConfig({ base: ${JSON.stringify(base)}, plugins: [presenit(
             assert.equal(await presenter.$eval(".presenit-timer", (el) => el.textContent), paused);
             await click(presenter, "タイマーをリセット");
             assert.equal(await presenter.$eval(".presenit-timer", (el) => el.textContent), "00:00");
+            // Content and frontmatter edits both reach the open page; the theme
+            // CSS is a separate (<link>) module that must not stay cached.
             await writeFile(
                 path.join(fixture, "src/slides/example/index.md"),
-                markdown.replace("Always visible.", "Edited live."),
+                markdown
+                    .replace("Always visible.", "Edited live.")
+                    .replace(
+                        "title: Acceptance deck",
+                        "title: Acceptance deck\ntheme: dark\nhue: 30",
+                    ),
             );
             await page.waitForFunction(() =>
                 document.querySelector("#presenit-stage")?.textContent?.includes("Edited live."),
             );
+            await page.waitForFunction(() => {
+                const slide = document.querySelector(".presenit-slide")!;
+                return (
+                    document.documentElement.dataset.presenitTheme === "dark" &&
+                    getComputedStyle(slide).getPropertyValue("--presenit-hue").trim() === "30" &&
+                    getComputedStyle(slide).backgroundColor.startsWith("oklch(0.2 ")
+                );
+            });
             await count(page, "2 / 3 · 2 / 3");
             await mkdir(path.join(fixture, "src/new"), { recursive: true });
             await writeFile(path.join(fixture, "src/new/index.md"), "# New glob deck");
@@ -475,7 +490,7 @@ export default defineConfig({ base: ${JSON.stringify(base)}, plugins: [presenit(
             await extra.waitForFunction(() => !document.querySelector("html.presenit-ready"));
             await extra.close();
             t.diagnostic(
-                "Dev, glob addition/removal, image, reveal, overview, presenter, laser, blackout, timer and live reload passed.",
+                "Dev, glob addition/removal, image, reveal, overview, presenter, laser, blackout, timer and live reload (content and frontmatter) passed.",
             );
         } finally {
             await Promise.race([
