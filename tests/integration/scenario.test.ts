@@ -453,6 +453,15 @@ export default defineConfig({ base: ${JSON.stringify(base)}, plugins: [presenit(
             await page.waitForFunction(
                 () => document.querySelector<HTMLElement>(".presenit-blackout")?.hidden,
             );
+            // Presentation remotes toggle blackout with ".".
+            await presenter.keyboard.press(".");
+            await page.waitForFunction(
+                () => !document.querySelector<HTMLElement>(".presenit-blackout")?.hidden,
+            );
+            await presenter.keyboard.press(".");
+            await page.waitForFunction(
+                () => document.querySelector<HTMLElement>(".presenit-blackout")?.hidden,
+            );
             await presenter.keyboard.press("l");
             const rect = await presenter.$eval(".is-current", (el) => {
                 const r = el.getBoundingClientRect();

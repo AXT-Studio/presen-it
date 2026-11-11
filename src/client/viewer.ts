@@ -284,7 +284,7 @@ const blackoutButton = menuItem(
         state.blackout = !state.blackout;
         update();
     },
-    { aria: "B", label: "B" },
+    { aria: "B .", label: "B" },
 );
 const printButton = menuItem("PDFとして保存", "print", async () => {
     closeMenu();
@@ -854,6 +854,8 @@ window.addEventListener("keydown", (event) => {
             f: () => void toggleFullscreen(),
             l: () => laserButton.click(),
             b: () => blackoutButton.click(),
+            // Many presentation remotes send "." for their blackout button.
+            ".": () => blackoutButton.click(),
             t: () => {
                 if (presenter) pause.click();
             },
