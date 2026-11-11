@@ -1,56 +1,149 @@
+/*
+ * Viewer chrome. Colors follow the deck theme: the plugin writes
+ * data-presenit-theme and --presenit-viewer-hue on <html>, so the page
+ * matches the slides from the first paint, before this Viewer script runs.
+ */
 :root {
-    font-family: system-ui, sans-serif;
-    color: #24272c;
-    background: #eceef1;
+    --presenit-viewer-hue: 210;
+    --presenit-aspect: 16 / 9;
+    --presenit-ui-backdrop: oklch(0.9 0.012 var(--presenit-viewer-hue));
+    --presenit-ui-panel: oklch(0.975 0.005 var(--presenit-viewer-hue));
+    --presenit-ui-raised: oklch(1 0 0);
+    --presenit-ui-surface: oklch(0.995 0.003 var(--presenit-viewer-hue) / 0.86);
+    --presenit-ui-text: oklch(0.25 0.02 var(--presenit-viewer-hue));
+    --presenit-ui-muted: oklch(0.47 0.02 var(--presenit-viewer-hue));
+    --presenit-ui-line: oklch(0.25 0.03 var(--presenit-viewer-hue) / 0.14);
+    --presenit-ui-hover: oklch(0.25 0.03 var(--presenit-viewer-hue) / 0.08);
+    --presenit-ui-accent: oklch(0.5 0.17 var(--presenit-viewer-hue));
+    --presenit-ui-accent-soft: oklch(0.5 0.17 var(--presenit-viewer-hue) / 0.13);
+    --presenit-ui-tip-bg: oklch(0.22 0.015 var(--presenit-viewer-hue) / 0.96);
+    --presenit-ui-tip-text: oklch(0.98 0.004 var(--presenit-viewer-hue));
+    --presenit-ui-scrim: oklch(0.2 0.02 var(--presenit-viewer-hue) / 0.45);
+    --presenit-ui-shadow:
+        0 1px 2px oklch(0.2 0.03 var(--presenit-viewer-hue) / 0.1),
+        0 10px 30px -6px oklch(0.2 0.03 var(--presenit-viewer-hue) / 0.25);
+    --presenit-ui-slide-shadow:
+        0 1px 2px oklch(0.2 0.03 var(--presenit-viewer-hue) / 0.08),
+        0 16px 48px -16px oklch(0.2 0.03 var(--presenit-viewer-hue) / 0.35);
+    color-scheme: light;
+    font-family:
+        system-ui,
+        -apple-system,
+        "Segoe UI",
+        "Hiragino Sans",
+        "Noto Sans JP",
+        sans-serif;
+    color: var(--presenit-ui-text);
+    background: var(--presenit-ui-backdrop);
 }
+:root[data-presenit-theme="dark"] {
+    --presenit-ui-backdrop: oklch(0.11 0.008 var(--presenit-viewer-hue));
+    --presenit-ui-panel: oklch(0.17 0.01 var(--presenit-viewer-hue));
+    --presenit-ui-raised: oklch(0.21 0.012 var(--presenit-viewer-hue));
+    --presenit-ui-surface: oklch(0.23 0.014 var(--presenit-viewer-hue) / 0.84);
+    --presenit-ui-text: oklch(0.93 0.008 var(--presenit-viewer-hue));
+    --presenit-ui-muted: oklch(0.71 0.012 var(--presenit-viewer-hue));
+    --presenit-ui-line: oklch(1 0 0 / 0.12);
+    --presenit-ui-hover: oklch(1 0 0 / 0.1);
+    --presenit-ui-accent: oklch(0.78 0.12 var(--presenit-viewer-hue));
+    --presenit-ui-accent-soft: oklch(0.78 0.12 var(--presenit-viewer-hue) / 0.2);
+    --presenit-ui-tip-bg: oklch(0.95 0.006 var(--presenit-viewer-hue) / 0.97);
+    --presenit-ui-tip-text: oklch(0.2 0.015 var(--presenit-viewer-hue));
+    --presenit-ui-scrim: oklch(0 0 0 / 0.55);
+    --presenit-ui-shadow: 0 1px 2px oklch(0 0 0 / 0.3), 0 12px 32px -6px oklch(0 0 0 / 0.55);
+    --presenit-ui-slide-shadow: 0 16px 48px -12px oklch(0 0 0 / 0.6);
+    color-scheme: dark;
+}
+html,
 body {
     margin: 0;
+    min-height: 100%;
 }
-button,
-summary {
-    font: inherit;
-    cursor: pointer;
+body {
+    background: var(--presenit-ui-backdrop);
 }
 button {
+    font: inherit;
     color: inherit;
-    border: 1px solid #c6cad0;
-    border-radius: 0.3rem;
-    background: white;
-    padding: 0.5rem 0.8rem;
-}
-button:hover,
-summary:hover {
-    background: #e5edf8;
-}
-button:disabled {
-    opacity: 0.45;
-    cursor: default;
+    cursor: pointer;
 }
 :focus-visible {
-    outline: 3px solid #2463b5;
-    outline-offset: 3px;
+    outline: 2px solid var(--presenit-ui-accent);
+    outline-offset: 2px;
 }
 [hidden] {
     display: none !important;
 }
-.presenit-layout {
-    display: flex;
-    height: calc(100dvh - 64px);
-    min-height: 160px;
+.presenit-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
 }
-#presenit-stage {
+.presenit-icon {
+    width: 20px;
+    height: 20px;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Avoid a flash of the unscaled deck before the Viewer starts. If the script
+   never runs, the slides appear anyway after a short delay. */
+@media (scripting: enabled) {
+    html:not(.presenit-ready) #presenit-stage {
+        visibility: hidden;
+        animation: presenit-fallback 0s 2s forwards;
+    }
+}
+@keyframes presenit-fallback {
+    to {
+        visibility: visible;
+    }
+}
+
+/* ------------------------------------------------------------------ */
+/* Stage: the slide is as large as the window allows, with no space    */
+/* reserved for controls.                                             */
+/* ------------------------------------------------------------------ */
+.presenit-ready body {
+    height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+.presenit-ready .presenit-layout {
+    display: flex;
+    height: 100dvh;
+}
+.presenit-ready .presenit-main {
     flex: 1;
     min-width: 0;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column;
+}
+.presenit-ready #presenit-stage {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    place-items: center;
     overflow: hidden;
+    touch-action: pinch-zoom;
 }
 .presenit-ready #presenit-stage .presenit-deck {
     width: var(--presenit-scaled-width);
     height: var(--presenit-scaled-height);
     position: relative;
+    overflow: clip;
     background: transparent;
+    box-shadow: var(--presenit-ui-slide-shadow);
 }
 .presenit-ready #presenit-stage .presenit-slide {
     position: absolute;
@@ -59,87 +152,340 @@ button:disabled {
     transform: scale(var(--presenit-scale));
     transform-origin: top left;
 }
-.presenit-ready #presenit-stage .presenit-slide:not(.is-current) {
+.presenit-ready #presenit-stage .presenit-slide.is-current {
+    z-index: 1;
+}
+.presenit-ready #presenit-stage .presenit-slide:not(.is-current, .is-leaving) {
     display: none;
 }
+.presenit-idle:not(.is-presenter) #presenit-stage,
+.presenit-idle:not(.is-presenter) #presenit-stage *,
+.is-laser #presenit-stage .presenit-slide.is-current,
+.is-laser #presenit-stage .presenit-slide.is-current * {
+    cursor: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Floating toolbar                                                   */
+/* ------------------------------------------------------------------ */
 .presenit-toolbar {
     position: fixed;
-    bottom: 0;
-    inset-inline: 0;
-    height: 64px;
+    left: 50%;
+    bottom: max(16px, env(safe-area-inset-bottom));
+    z-index: 20;
     display: flex;
     align-items: center;
+    gap: 2px;
+    padding: 4px;
+    border: 1px solid var(--presenit-ui-line);
+    border-radius: 999px;
+    color: var(--presenit-ui-text);
+    background: var(--presenit-ui-surface);
+    box-shadow: var(--presenit-ui-shadow);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    backdrop-filter: blur(16px) saturate(1.4);
+    opacity: 0;
+    translate: -50% 10px;
+    pointer-events: none;
+    transition:
+        opacity 0.2s ease,
+        translate 0.2s ease;
+}
+.presenit-toolbar-shown .presenit-toolbar,
+.presenit-toolbar:has(:focus-visible) {
+    opacity: 1;
+    translate: -50% 0;
+    pointer-events: auto;
+}
+.presenit-icon-button {
+    display: inline-grid;
+    place-items: center;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    transition:
+        background-color 0.12s ease,
+        color 0.12s ease;
+}
+@media (hover: hover) {
+    .presenit-icon-button:hover {
+        background: var(--presenit-ui-hover);
+    }
+}
+.presenit-icon-button:active {
+    background: var(--presenit-ui-line);
+}
+.presenit-icon-button[aria-pressed="true"] {
+    color: var(--presenit-ui-accent);
+    background: var(--presenit-ui-accent-soft);
+    box-shadow: inset 0 0 0 1.5px var(--presenit-ui-accent);
+}
+.presenit-icon-button[aria-disabled="true"] {
+    opacity: 0.35;
+    cursor: default;
+}
+@media (hover: hover) {
+    .presenit-icon-button[aria-disabled="true"]:hover {
+        background: transparent;
+    }
+}
+.presenit-separator {
+    align-self: stretch;
+    margin: 8px 4px;
+    border-left: 1px solid var(--presenit-ui-line);
+}
+.presenit-position {
+    min-width: 4.75rem;
+    padding: 0 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
-    gap: 0.6rem;
-    background: #fff;
-    border-top: 1px solid #c6cad0;
-    box-sizing: border-box;
-    z-index: 20;
-}
-.presenit-counter {
-    min-width: 8.5rem;
-    text-align: center;
+    gap: 4px;
+    font-size: 14px;
+    line-height: 1;
     font-variant-numeric: tabular-nums;
-    font-size: 0.9rem;
+    white-space: nowrap;
 }
+.presenit-steps {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+    color: var(--presenit-ui-muted);
+}
+.presenit-steps i {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.5;
+}
+.presenit-steps i.is-on {
+    background: var(--presenit-ui-accent);
+    opacity: 1;
+}
+.presenit-steps-text {
+    font-size: 10px;
+}
+
+/* Menu: a group of buttons in a popover above its trigger. */
 .presenit-menu {
-    position: relative;
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    min-width: 232px;
+    padding: 6px;
+    border: 1px solid var(--presenit-ui-line);
+    border-radius: 14px;
+    color: var(--presenit-ui-text);
+    background: var(--presenit-ui-surface);
+    box-shadow: var(--presenit-ui-shadow);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    backdrop-filter: blur(20px) saturate(1.4);
 }
-.presenit-menu summary {
-    padding: 0.5rem 0.6rem;
+@media (prefers-reduced-motion: no-preference) {
+    .presenit-menu:popover-open {
+        animation: presenit-pop 0.14s ease-out;
+    }
 }
-.presenit-menu-actions {
-    position: absolute;
-    bottom: 3rem;
-    right: 0;
-    width: max-content;
-    display: grid;
-    gap: 0.3rem;
-    background: white;
-    padding: 0.6rem;
-    border: 1px solid #c6cad0;
-    border-radius: 0.4rem;
-    box-shadow: 0 0.5rem 2rem #0002;
+@keyframes presenit-pop {
+    from {
+        opacity: 0;
+        translate: 0 4px;
+    }
 }
-.presenit-menu-actions button {
+.presenit-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 38px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 9px;
+    font-size: 14px;
     text-align: left;
+    background: transparent;
 }
-button[aria-pressed="true"] {
-    background: #dceafd;
-    border-color: #2463b5;
+@media (hover: hover) {
+    .presenit-menu-item:hover {
+        background: var(--presenit-ui-hover);
+    }
 }
-.presenit-presenter {
-    width: 26%;
-    min-width: 260px;
-    overflow: auto;
-    padding: 1.25rem;
-    box-sizing: border-box;
-    background: white;
+.presenit-menu-item .presenit-icon {
+    width: 18px;
+    height: 18px;
+    color: var(--presenit-ui-muted);
 }
-.presenit-ui-title {
-    font-size: 1rem;
-    margin: 0 0 0.5rem;
+.presenit-menu-item[aria-pressed="true"] {
+    color: var(--presenit-ui-accent);
+}
+.presenit-menu-item[aria-pressed="true"] .presenit-icon {
+    color: currentColor;
+}
+.presenit-menu-item span {
+    flex: 1;
+}
+kbd {
+    min-width: 1.5em;
+    padding: 2px 5px;
+    border: 1px solid var(--presenit-ui-line);
+    border-radius: 5px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.2;
+    text-align: center;
+    color: var(--presenit-ui-muted);
+}
+
+/* Tooltip: in the top layer so it also clears the open menu. */
+.presenit-tooltip:popover-open {
+    display: flex;
+}
+.presenit-tooltip {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    padding: 5px 8px;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    font-size: 12px;
+    line-height: 1.2;
+    white-space: nowrap;
+    pointer-events: none;
+    color: var(--presenit-ui-tip-text);
+    background: var(--presenit-ui-tip-bg);
+    box-shadow: var(--presenit-ui-shadow);
+}
+.presenit-tooltip kbd {
+    border-color: currentColor;
+    color: inherit;
+    opacity: 0.75;
+}
+
+/* Status messages appear as a short-lived toast. */
+.presenit-status {
+    position: fixed;
+    left: 50%;
+    bottom: 80px;
+    translate: -50% 0;
+    z-index: 25;
+    max-width: min(32rem, calc(100vw - 32px));
+    margin: 0;
+    padding: 9px 14px;
+    border: 1px solid var(--presenit-ui-line);
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.5;
+    background: var(--presenit-ui-surface);
+    box-shadow: var(--presenit-ui-shadow);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+}
+.presenit-status:empty {
+    display: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Overview                                                           */
+/* ------------------------------------------------------------------ */
+.presenit-overview {
+    width: min(1200px, calc(100vw - 32px));
+    max-width: none;
+    max-height: calc(100dvh - 48px);
+    padding: 0;
+    border: 1px solid var(--presenit-ui-line);
+    border-radius: 16px;
+    color: var(--presenit-ui-text);
+    background: var(--presenit-ui-panel);
+    box-shadow: var(--presenit-ui-shadow);
+    overscroll-behavior: contain;
+}
+.presenit-overview[open] {
+    display: flex;
+    flex-direction: column;
+}
+.presenit-overview::backdrop {
+    background: var(--presenit-ui-scrim);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+}
+.presenit-overview header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 8px 8px 20px;
+    border-bottom: 1px solid var(--presenit-ui-line);
+}
+.presenit-overview h2 {
+    margin: 0;
+    font-size: 15px;
     font-weight: 600;
 }
-.presenit-timer {
-    display: block;
-    font-size: 2.5rem;
-    font-variant-numeric: tabular-nums;
+.presenit-grid {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px 16px;
 }
-.presenit-actions {
+.presenit-grid > button {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    text-align: left;
+    background: transparent;
 }
-.presenit-presenter h2 {
-    font-size: 0.9rem;
-    margin-top: 1.5rem;
-}
-.presenit-preview {
+.presenit-thumb {
     width: 100%;
-    aspect-ratio: 16/9;
+    aspect-ratio: var(--presenit-aspect);
     overflow: hidden;
-    background: #eceef1;
+    border-radius: 6px;
+    outline: 1px solid var(--presenit-ui-line);
+    transition: outline-color 0.12s ease;
+}
+@media (hover: hover) {
+    .presenit-grid > button:hover .presenit-thumb {
+        outline: 2px solid var(--presenit-ui-muted);
+    }
+}
+.presenit-grid > button[aria-current="true"] .presenit-thumb {
+    outline: 2px solid var(--presenit-ui-accent);
+    outline-offset: 2px;
+}
+.presenit-thumb-label {
+    display: flex;
+    gap: 8px;
+    min-width: 0;
+    font-size: 13px;
+    color: var(--presenit-ui-muted);
+}
+.presenit-thumb-label span {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.presenit-thumb-label b {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--presenit-ui-text);
+}
+.presenit-grid > button[aria-current="true"] .presenit-thumb-label b {
+    color: var(--presenit-ui-accent);
 }
 .presenit-preview > .presenit-slide,
 .presenit-thumb > .presenit-slide {
@@ -147,80 +493,145 @@ button[aria-pressed="true"] {
     transform-origin: top left;
     pointer-events: none;
 }
-.presenit-notes {
-    white-space: pre-wrap;
-    line-height: 1.65;
-}
-.presenit-overview {
-    border: 0;
-    border-radius: 0.5rem;
-    width: min(1100px, 90vw);
-    max-height: 85dvh;
-    padding: 1.2rem;
-    color: #24272c;
-    background: #f8f9fb;
-}
-.presenit-overview::backdrop {
-    background: #141923b3;
-}
-.presenit-overview header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-.presenit-overview h2 {
-    font-size: 1.2rem;
-}
-.presenit-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 1rem;
-}
-.presenit-grid > button {
-    text-align: left;
-    padding: 0.5rem;
-    overflow: hidden;
-}
-.presenit-thumb {
-    width: 100%;
-    aspect-ratio: 16/9;
-    overflow: hidden;
-    margin-bottom: 0.5rem;
-}
 .presenit-thumb .is-concealed {
     visibility: visible;
     opacity: 1;
 }
+
+/* ------------------------------------------------------------------ */
+/* Presenter: controls stay docked and visible.                       */
+/* ------------------------------------------------------------------ */
+.is-presenter .presenit-main {
+    padding: 16px;
+    gap: 12px;
+}
+.is-presenter #presenit-stage {
+    touch-action: pan-y pinch-zoom;
+}
+.is-presenter .presenit-toolbar {
+    position: static;
+    align-self: center;
+    translate: none;
+    opacity: 1;
+    pointer-events: auto;
+    background: var(--presenit-ui-panel);
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+}
+.presenit-presenter {
+    width: clamp(300px, 30vw, 440px);
+    flex: none;
+    overflow: auto;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    border-left: 1px solid var(--presenit-ui-line);
+    background: var(--presenit-ui-panel);
+}
+.presenit-ui-title {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--presenit-ui-muted);
+}
+.presenit-label {
+    display: block;
+    margin: 0 0 8px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--presenit-ui-muted);
+}
+.presenit-timer-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 14px 14px 16px;
+    border: 1px solid var(--presenit-ui-line);
+    border-radius: 12px;
+    background: var(--presenit-ui-raised);
+}
+.presenit-timer-text .presenit-label {
+    margin-bottom: 4px;
+}
+.presenit-timer {
+    display: block;
+    font-size: 2.4rem;
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: 0.01em;
+    font-variant-numeric: tabular-nums;
+}
+.presenit-timer.is-paused {
+    color: var(--presenit-ui-muted);
+}
+.presenit-actions {
+    display: flex;
+    gap: 4px;
+}
+.presenit-actions .presenit-icon-button {
+    border: 1px solid var(--presenit-ui-line);
+}
+.presenit-preview {
+    width: 100%;
+    aspect-ratio: var(--presenit-aspect);
+    overflow: hidden;
+    border-radius: 8px;
+    outline: 1px solid var(--presenit-ui-line);
+    background: var(--presenit-ui-raised);
+}
+.presenit-preview-end {
+    height: 100%;
+    margin: 0;
+    display: grid;
+    place-items: center;
+    font-size: 14px;
+    color: var(--presenit-ui-muted);
+}
+.presenit-notes {
+    margin: 0;
+    white-space: pre-wrap;
+    font-size: 17px;
+    line-height: 1.7;
+}
+.presenit-notes.is-empty {
+    font-size: 14px;
+    color: var(--presenit-ui-muted);
+}
+
+/* ------------------------------------------------------------------ */
+/* Blackout and laser                                                 */
+/* ------------------------------------------------------------------ */
 .presenit-blackout {
     position: fixed;
     inset: 0;
-    background: black;
     z-index: 15;
+    background: black;
+    cursor: none;
 }
 .presenit-laser {
     position: fixed;
+    z-index: 30;
     width: 12px;
     height: 12px;
-    background: #e72e39;
     border: 2px solid white;
     border-radius: 50%;
-    box-shadow: 0 0 8px #e72e39;
+    background: #e72e39;
+    box-shadow: 0 0 10px 2px #e72e39b3;
     translate: -50% -50%;
-    z-index: 30;
     pointer-events: none;
 }
-.presenit-status {
-    position: fixed;
-    left: 1rem;
-    bottom: 65px;
-    font-size: 0.85rem;
-    background: white;
-    max-width: 32rem;
-    z-index: 21;
+.is-blackout .presenit-toolbar,
+.is-blackout .presenit-status,
+.is-blackout .presenit-laser {
+    visibility: hidden;
 }
-.presenit-status:empty {
-    display: none;
-}
+
+/* Reveal */
 .presenit-slide [data-presenit-at] {
     transition: opacity var(--presenit-fragment-duration, 0.3s) ease;
 }
@@ -228,47 +639,103 @@ button[aria-pressed="true"] {
     visibility: hidden;
     opacity: 0;
 }
+
+@media (pointer: coarse) {
+    .presenit-icon-button {
+        min-width: 44px;
+        min-height: 44px;
+    }
+}
+@media (max-width: 420px) {
+    .presenit-toolbar {
+        gap: 0;
+        padding: 3px;
+    }
+    .presenit-position {
+        min-width: 3.75rem;
+        padding: 0 2px;
+    }
+    .presenit-separator {
+        margin-inline: 2px;
+    }
+}
+@media (max-width: 760px) {
+    .presenit-ready.is-presenter body {
+        height: auto;
+        overflow: auto;
+    }
+    .is-presenter .presenit-layout {
+        flex-direction: column;
+        height: auto;
+    }
+    .is-presenter .presenit-main {
+        flex: none;
+    }
+    .is-presenter #presenit-stage {
+        flex: none;
+        aspect-ratio: var(--presenit-aspect);
+        max-height: 70dvh;
+    }
+    .presenit-presenter {
+        width: auto;
+        overflow: visible;
+        border-left: 0;
+        border-top: 1px solid var(--presenit-ui-line);
+    }
+}
 @media (prefers-reduced-motion: reduce) {
+    .presenit-toolbar {
+        translate: -50% 0;
+        transition: opacity 0.12s linear;
+    }
     .presenit-slide [data-presenit-at] {
         transition: none;
     }
 }
-@media (max-width: 700px) {
-    .is-presenter .presenit-layout {
-        flex-direction: column;
-        overflow: auto;
+@media (forced-colors: active) {
+    .presenit-icon-button[aria-pressed="true"] {
+        outline: 2px solid Highlight;
     }
-    .is-presenter #presenit-stage {
-        min-height: 42dvh;
-    }
-    .presenit-presenter {
-        width: 100%;
-        min-width: 0;
-        overflow: visible;
-    }
-    .presenit-toolbar {
-        gap: 0.2rem;
-    }
-    button {
-        padding: 0.5rem;
+    .presenit-steps i.is-on {
+        background: Highlight;
     }
 }
+
+/* ------------------------------------------------------------------ */
+/* Print: every slide and Reveal, one per page, without Viewer chrome. */
+/* ------------------------------------------------------------------ */
 @media print {
+    /* Transitions outrank !important, so a Reveal fade would otherwise start
+       when the print media applies and could be captured half-transparent. */
+    *,
+    *::before,
+    *::after {
+        transition: none !important;
+    }
     html,
     body {
+        height: auto !important;
+        min-height: 0 !important;
+        overflow: visible !important;
         background: white !important;
         margin: 0 !important;
         padding: 0 !important;
     }
     .presenit-layout,
+    .presenit-main,
     #presenit-stage {
         display: block !important;
         height: auto !important;
+        padding: 0 !important;
         overflow: visible !important;
+        visibility: visible !important;
+        animation: none !important;
     }
     .presenit-ready #presenit-stage .presenit-deck {
         width: auto;
         height: auto;
+        overflow: visible;
+        box-shadow: none;
     }
     .presenit-ready #presenit-stage .presenit-slide {
         display: flex !important;
@@ -291,6 +758,8 @@ button[aria-pressed="true"] {
         opacity: 1 !important;
     }
     .presenit-toolbar,
+    .presenit-menu,
+    .presenit-tooltip,
     .presenit-presenter,
     .presenit-overview,
     .presenit-status,
@@ -302,10 +771,4 @@ button[aria-pressed="true"] {
     .katex .katex-mathml {
         display: none;
     }
-}
-
-.is-blackout .presenit-toolbar,
-.is-blackout .presenit-status,
-.is-blackout .presenit-laser {
-    visibility: hidden;
 }

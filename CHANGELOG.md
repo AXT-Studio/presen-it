@@ -5,6 +5,10 @@
 - Replace the custom CLI with a TypeScript Vite plugin for JSR `@ayaexptech/presen-it`.
 - Discover multiple Markdown decks with globs; emit directory-based HTML routes with Vite assets and base support.
 - Add a framework-free Viewer with Reveal, Overview, synchronized Presenter, laser, blackout and timer.
+- Viewer: fill the window with the slide, match the surround and controls to the deck theme, and replace the
+  fixed text toolbar with an auto-hiding icon toolbar (mouse, keyboard focus, tap; swipe to navigate).
+- Viewer: cross-fade page transitions over the outgoing slide so no page background flashes through.
+- Print: disable transitions so Reveal content is never captured mid-fade.
 - Save PDFs through browser printing, with all Reveal steps and one slide per page.
 - Preserve Markdown/frontmatter/directive semantics and defaults; update only the fallback product title.
 - Verify Vite, Vite+, local tarball installation, consumer types, real authored slides and JSR dry-run.

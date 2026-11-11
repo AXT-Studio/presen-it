@@ -176,13 +176,48 @@ async function click(page: import("puppeteer-core").Page, label: string) {
     await page.bringToFront();
     await page.locator(`button[aria-label="${label}"]`).click();
 }
+/** Waits for "slide / total · step / maxStep", read from the toolbar position. */
 async function count(page: import("puppeteer-core").Page, value: string) {
     await page.waitForFunction(
-        (expected) => document.querySelector(".presenit-counter")?.textContent === expected,
+        (expected) => {
+            const steps = document.querySelector<HTMLElement>(".presenit-steps");
+            const slide = document.querySelector(".presenit-counter")?.textContent;
+            return `${slide} · ${steps?.dataset.step} / ${steps?.dataset.max}` === expected;
+        },
         {},
         value,
     );
 }
+async function toolbarShown(page: import("puppeteer-core").Page, shown: boolean) {
+    await page.waitForFunction(
+        (expected) => {
+            const toolbar = document.querySelector(".presenit-toolbar")!;
+            const style = getComputedStyle(toolbar);
+            return (style.pointerEvents !== "none" && style.opacity === "1") === expected;
+        },
+        { timeout: 6000 },
+        shown,
+    );
+}
+/** Opens the floating menu the way a mouse user does: approach the bottom edge, then click. */
+async function openMenu(page: import("puppeteer-core").Page) {
+    await page.bringToFront();
+    const { width, height } = page.viewport()!;
+    await page.mouse.move(width / 2, height - 24);
+    await toolbarShown(page, true);
+    await click(page, "メニュー");
+    await page.waitForSelector(".presenit-menu:popover-open");
+}
+const VIEWER_UI = [
+    ".presenit-toolbar",
+    ".presenit-menu",
+    ".presenit-tooltip",
+    ".presenit-status",
+    ".presenit-presenter",
+    ".presenit-overview",
+    ".presenit-blackout",
+    ".presenit-laser",
+];
 
 test(
     "Installed package: complete authoring, presenting and PDF scenario",
@@ -315,8 +350,47 @@ export default defineConfig({ base: ${JSON.stringify(base)}, plugins: [presenit(
                         ?.naturalWidth === 20,
             );
             await count(page, "1 / 3 · 0 / 0");
-            await page.keyboard.press("ArrowRight");
+            // The slide uses the whole window: no space is reserved for controls.
+            const frame = await page.evaluate(() => ({
+                theme: document.documentElement.dataset.presenitTheme,
+                stage: document.querySelector("#presenit-stage")!.getBoundingClientRect().height,
+                scroll: document.documentElement.scrollHeight,
+                viewport: innerHeight,
+            }));
+            assert.deepEqual(frame, {
+                theme: "light",
+                stage: frame.viewport,
+                scroll: frame.viewport,
+                viewport: frame.viewport,
+            });
+            // The floating toolbar appears near the bottom edge or with keyboard focus only.
+            const viewport = page.viewport()!;
+            await page.mouse.move(viewport.width / 2, viewport.height / 3);
+            await toolbarShown(page, false);
+            await page.mouse.move(viewport.width / 2, viewport.height - 24);
+            await toolbarShown(page, true);
+            await page.mouse.move(viewport.width / 2, viewport.height / 3);
+            await toolbarShown(page, false);
+            await page.keyboard.press("Tab");
+            await toolbarShown(page, true);
+            await page.keyboard.press("Escape");
+            await toolbarShown(page, false);
+            // Page transitions cross-fade over the outgoing slide instead of the page background.
+            const crossfade = await page.evaluate(() => {
+                document.body.dispatchEvent(
+                    new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }),
+                );
+                const leaving = document.querySelector<HTMLElement>(".presenit-slide.is-leaving");
+                return (
+                    leaving && {
+                        index: leaving.dataset.slideIndex,
+                        display: getComputedStyle(leaving).display,
+                    }
+                );
+            });
+            assert.deepEqual(crossfade, { index: "0", display: "flex" });
             await count(page, "2 / 3 · 0 / 3");
+            await page.waitForFunction(() => !document.querySelector(".is-leaving"));
             assert.equal(
                 await page.$eval(
                     '.is-current [data-presenit-at="1"]',
@@ -438,11 +512,35 @@ export default defineConfig({ base: ${JSON.stringify(base)}, plugins: [presenit(
                         document.body.dataset.printCalled = "yes";
                     };
                 });
-                await page.bringToFront();
-                await page.locator("summary").click();
+                // Print from a slide whose Reveal steps are still hidden on screen.
+                await page.keyboard.press("ArrowRight");
+                await count(page, "2 / 3 · 0 / 3");
+                await openMenu(page);
                 await click(page, "PDFとして保存");
                 await page.waitForFunction(() => document.body.dataset.printCalled === "yes");
                 await page.emulateMediaType("print");
+                assert.deepEqual(
+                    await page.evaluate(
+                        (selectors) =>
+                            selectors.filter((selector) =>
+                                Array.from(document.querySelectorAll(selector)).some(
+                                    (node) => getComputedStyle(node).display !== "none",
+                                ),
+                            ),
+                        VIEWER_UI,
+                    ),
+                    [],
+                );
+                const concealed = await page.$$eval(
+                    "#presenit-stage .presenit-slide .is-concealed",
+                    (nodes) =>
+                        nodes.map(
+                            (node) =>
+                                `${getComputedStyle(node).visibility}/${getComputedStyle(node).opacity}`,
+                        ),
+                );
+                assert.ok(concealed.length > 0);
+                assert.deepEqual(new Set(concealed), new Set(["visible/1"]));
                 assert.equal(
                     await page.$$eval(
                         "#presenit-stage .presenit-slide",
@@ -486,6 +584,15 @@ export default defineConfig({ base: ${JSON.stringify(base)}, plugins: [presenit(
         try {
             await open(realPage, realPreview.url + "slides/real/");
             await count(realPage, "1 / 30 · 0 / 0");
+            // Dark decks get a dark surround instead of a light page background.
+            const surround = await realPage.evaluate(() => ({
+                theme: document.documentElement.dataset.presenitTheme,
+                lightness: Number(
+                    /oklch\(([\d.]+)/.exec(getComputedStyle(document.body).backgroundColor)?.[1],
+                ),
+            }));
+            assert.equal(surround.theme, "dark");
+            assert.ok(surround.lightness < 0.3, JSON.stringify(surround));
             await realPage.waitForFunction(() =>
                 Array.from(document.querySelectorAll<HTMLImageElement>("#presenit-stage img"))
                     .filter((img) => new URL(img.src).origin === location.origin)

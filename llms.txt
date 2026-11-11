@@ -115,7 +115,10 @@ Arrows/Space/Enter navigate Reveal steps then slides. Home/End jump to first/las
 O: overview; P: separate Presenter; F: fullscreen; L: laser; B: blackout; Escape: clear blackout.
 T/R: pause/reset presenter timer. Same-origin tabs sync page, Reveal, blackout and laser via BroadcastChannel.
 Presenter shows notes and next step. URL hash is 1-based slide number; ?presenter selects Presenter.
-Menu "PDFとして保存" opens browser print; choose Save as PDF, no margins, no headers/footers, 100% scale.
+The audience view fills the window; its icon toolbar stays hidden until the mouse nears the bottom edge,
+keyboard focus enters it (Tab; Escape hides it), or a touch tap. Touch swipes move between slides.
+Viewer chrome follows the deck theme/hue. The Presenter keeps its toolbar docked and visible.
+Menu (⋮) "PDFとして保存" opens browser print; choose Save as PDF, no margins, no headers/footers, 100% scale.
 Print shows all Reveal content, one slide per page, no speaker notes or Viewer UI.
 
 ### Development

@@ -15,7 +15,7 @@
 | [引き継ぎ時の再検証](./handoff-validation.md) | 整理したファイルと、整理後の検証結果 |
 | [公開構成](./publishing.md) | 生成Viewer、JSR dry-run、ローカル配布、公開許可の制約 |
 
-`v2-plan.md`は完了済みの実装記録です。次のViewer UX課題は`HANDOFF.md`を参照してください。
+`v2-plan.md`は完了済みの実装記録です。現在のViewerの構成とUX上の判断は`HANDOFF.md`を参照してください。
 
 ## 歴史資料
 

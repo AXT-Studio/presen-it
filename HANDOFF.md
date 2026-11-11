@@ -2,9 +2,9 @@
 
 ## 次の担当へ
 
-次の依頼は **Viewerのデザイン・UX改善**。この文書を最初に読み、`presenit-scenario.md`、
-`docs/v2-spec.md`、`docs/markdown-compatibility.md`を確認してから着手してください。
-今回の引き継ぎ準備では機能追加・Viewerのデザイン修正は行っていません。
+この文書を最初に読み、`presenit-scenario.md`、`docs/v2-spec.md`、`docs/markdown-compatibility.md`を
+確認してから着手してください。引き継ぎ時点で報告されていたViewerのデザイン・UXの4課題は対応済みです
+（下の「Viewerのデザイン・UX（対応済み）」）。
 レジストリ公開・GitHub Release・リモートpushは、所有者の明示的な許可なしに行わないでください。
 
 ## 目的と設計思想
@@ -177,7 +177,8 @@ CI試験だけでOSの印刷ダイアログ操作・PDFの目視まですべて�
 ### デザイン変更時のテストの扱い
 
 `tests/render.test.ts`には色・クラス名など見た目に依存する期待値も残っています。
-結合試験もボタンの日本語ラベル・カウンターの文字列・`.presenit-*`セレクターを使います。
+結合試験もボタンの日本語ラベル（`aria-label`）、`.presenit-counter`のページ表記と`.presenit-steps`の
+`data-step`/`data-max`、`.presenit-*`セレクターを使います。
 UI変更に伴いこれらを適切に更新できますが、機能/意味の検証を削除して通さないでください。
 Presenterと投影、全Revealの印刷、ノート/UIの印刷除外も再確認します。
 
@@ -192,25 +193,29 @@ Presenterと投影、全Revealの印刷、ノート/UIの印刷除外も再確�
 - 整理後の結合試験は、初回にglob追加直後の`html.presenit-ready`待ちでタイムアウトした。
   実装・テストを変更しない単独再実行は成功。原因は未特定で、watch反映とアクセスのタイミングが調査候補。
   この間欠的な失敗を、整理で修正済みの問題として扱わない。詳細は`docs/handoff-validation.md`。
-- ユーザー報告の次の4点は**未修正**。今回の整理で解決済みと扱わない。
 
-## 次に取り組むViewerのデザイン・UX
+## Viewerのデザイン・UX（対応済み）
 
-1. **テーマと操作UIの不一致**: darkスライドでも白い操作UIが目立つ。
-2. **遷移時の明るい背景/白いフラッシュ**: ページ遷移の背後が見えることがある。
-3. **テキスト過多**: 操作UIのラベル・情報量が多い。
-4. **スライド表示領域と操作バー**: スライドを大きく表示し、Google Slidesの発表画面のように
-   普段は目立たず、マウスを近づけると現れるコンパクトな操作バーにしたい。
+引き継ぎ時に報告された4課題（テーマと操作UIの不一致、遷移時の白いフラッシュ、テキスト過多、
+常設の操作バーによる表示領域の縮小）に対応しました。Viewerを変更するときは次の構造を前提にしてください。
 
-最初の調査先は`src/client/viewer.css`の`:root`、`.presenit-layout`、`.presenit-toolbar`、
-`.presenit-presenter`、`.presenit-menu-actions`、および`viewer.ts`のUI生成・`navigate()`・`fit()`/`resize()`です。
-現状の操作バーは64pxを常時確保しています。遷移では現在ページを切り替えた後、新ページをopacity 0からアニメーションします。
-これらは調査候補であり、フラッシュの原因を断定したものではありません。
-スライド自体の色・描画を調整する場合は`src/render/theme.ts`も確認します。
+- **テーマ連動**: プラグインが`<html>`へ`data-presenit-theme`と`--presenit-viewer-hue`を出力し、
+  `viewer.css`の`--presenit-ui-*`トークンがlight/darkと色相から周囲・操作UIの色を決めます。
+  スクリプト実行前の初回描画から一致させるためで、スライド自体の配色（`theme.ts`）とは独立です。
+- **表示領域**: ステージはウィンドウ全体。操作バーは`position: fixed`で重なり、領域を確保しません。
+  Presenterだけは操作バーをスライドの下に常時表示します（`.is-presenter`）。
+- **操作バーの表示**: `html.presenit-toolbar-shown`（画面下部へのマウス接近、メニュー表示中、タップ、
+  初回表示時の短いヒント）か、CSSの`.presenit-toolbar:has(:focus-visible)`（キーボードフォーカス）で表示。
+  非表示時も`opacity`/`pointer-events`だけで隠すため、Tabで到達できます。Escで閉じます。
+- **ページ遷移**: 新しいスライドを、旧スライド（`.is-leaving`）の上でフェード/スライドさせる。
+  旧スライドは遷移完了まで表示され、Revealの状態も保持します。初回のPresenter同期・reduced motionでは省略。
+- **メニュー/ツールチップ**: Popover API。ツールチップは`popover="manual"`の単一要素で、
+  ホバー（タッチ以外）とキーボードフォーカスに表示し、`aria-hidden`（名前は各ボタンの`aria-label`）。
+- **アイコン**: 依存を増やさないため、`viewer.ts`の`ICONS`に単純なSVGパスを自作して保持しています。
+- **印刷**: 操作UI一式を`display: none`にし、全要素の`transition`を無効化（Revealのフェード途中を印刷しない）。
 
-まずlight/dark・fade/scroll/none・Presenter・全画面・ウィンドウサイズ変更を見比べ、
-変更後はマウスだけでなくキーボード/タッチ、フォーカス、Reveal・同期・印刷への影響も確認してください。
-新しいデザイン案やその実装はこの引き継ぎ作業には含めていません。
+確認時はlight/dark・fade/scroll/none・Presenter・全画面・ウィンドウサイズ変更に加え、
+マウス/キーボード/タッチ、Reveal・同期・印刷への影響を見てください。
 
 ## 現行資料と歴史資料
 
