@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.0.0-rc.1 - Unreleased
+
+- Replace the custom CLI with a TypeScript Vite plugin for JSR `@ayaexptech/presen-it`.
+- Discover multiple Markdown decks with globs; emit directory-based HTML routes with Vite assets and base support.
+- Add a framework-free Viewer with Reveal, Overview, synchronized Presenter, laser, blackout and timer.
+- Viewer: fill the window with the slide, match the surround and controls to the deck theme, and replace the
+  fixed text toolbar with an auto-hiding icon toolbar (mouse, keyboard focus, tap; swipe to navigate).
+- Viewer: cross-fade page transitions over the outgoing slide so no page background flashes through.
+- Print: disable transitions so Reveal content is never captured mid-fade.
+- Viewer: PageDown / PageUp move forward / back and "." toggles blackout for presentation remotes (clickers).
+- Dev: invalidate every variant of the theme CSS module (including Vite's `?direct` link request) so
+  frontmatter changes such as `theme`, `hue` and `fontFamily` reach open slides after the reload.
+- Save PDFs through browser printing, with all Reveal steps and one slide per page.
+- Preserve Markdown/frontmatter/directive semantics and defaults; update only the fallback product title.
+- Verify Vite, Vite+, local tarball installation, consumer types, real authored slides and JSR dry-run.
+- Remove automatic npm publishing; JSR publication is a manual step (see `docs/publishing.md`).
+
 ## 1.1.3 — 2026-08-03
 
 ### Fixes
@@ -51,7 +68,7 @@
 
 ### Features
 
-- Stable **1.0.0** release: CLI, documented frontmatter, directives, and Markdown dialect follow SemVer (see `docs/1.0-scope.md`)
+- Stable **1.0.0** release: CLI, documented frontmatter, directives, and Markdown dialect follow SemVer (see `docs/1.0-scope.md` in the v1 tree)
 - Official site on GitHub Pages (`site/`, https://axt-ayakoto.github.io/presen-it/)
 - README / `llms.txt` updated for 1.0 (prerelease wording removed; site + scope links)
 

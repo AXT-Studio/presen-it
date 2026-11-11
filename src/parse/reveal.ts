@@ -6,8 +6,8 @@ import type {
     PhrasingContent,
     RootContent,
 } from "mdast";
-import type { Diagnostic, Slide } from "../types";
-import { extractCommentText, isHtmlComment, parseDirectiveComment } from "./directive";
+import type { Diagnostic, Slide } from "../types.ts";
+import { extractCommentText, isHtmlComment, parseDirectiveComment } from "./directive.ts";
 
 export type RevealState = {
     at: number;
@@ -97,12 +97,17 @@ function consumeRevealHtml(node: Html, state: RevealState): boolean {
 function fragmentOpen(at: number): Html {
     return {
         type: "html",
+        data: { presenitGenerated: true } as unknown as Html["data"],
         value: `<span class="presenit-fragment" data-presenit-at="${at}">`,
     };
 }
 
 function fragmentClose(): Html {
-    return { type: "html", value: "</span>" };
+    return {
+        type: "html",
+        value: "</span>",
+        data: { presenitGenerated: true } as unknown as Html["data"],
+    };
 }
 
 function wrapFragment(nodes: PhrasingContent[], at: number, state: RevealState): PhrasingContent[] {

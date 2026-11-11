@@ -1,5 +1,5 @@
-import { buildGoogleFontsImports, namedFontFamilies } from "../font-family";
-import { SLIDE_PADDING_RATIO } from "../shared/slide-padding";
+import { buildGoogleFontsImports, namedFontFamilies } from "../font-family.ts";
+import { SLIDE_PADDING_RATIO } from "../shared/slide-padding.ts";
 
 type ThemeBuildConfig = {
     theme: "light" | "dark";
@@ -588,8 +588,7 @@ export function buildThemeCss(config: ThemeBuildConfig): string {
 /* Reveal fragments: layout kept; viewer toggles .is-concealed */
 [data-presenit-at] {
     transition:
-        opacity var(--presenit-anim-duration, 0.3s) linear,
-        visibility var(--presenit-anim-duration, 0.3s) linear;
+        opacity var(--presenit-anim-duration, 0.3s) linear;
 }
 
 [data-presenit-at].is-concealed {

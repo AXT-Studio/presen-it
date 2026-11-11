@@ -1,55 +1,122 @@
-name: Release
+name: Publish to JSR
 
 on:
-    release:
-        types: [published]
-
-concurrency:
-    group: release-${{ github.ref }}
-    cancel-in-progress: false
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Tag name that starts with v (example: v1.0.0-alpha.1)"
+        required: true
+        type: string
+      dry_run:
+        description: "Run jsr publish with --dry-run"
+        required: false
+        default: true
+        type: boolean
 
 jobs:
-    publish:
-        name: Publish to npm
-        runs-on: ubuntu-latest
-        timeout-minutes: 20
-        permissions:
-            contents: read
-            id-token: write
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
 
-            - name: Setup pnpm
-              uses: pnpm/action-setup@v4
-              with:
-                  version: 11.11.0
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: 22
-                  registry-url: https://registry.npmjs.org
-                  cache: pnpm
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
 
-            - name: Install dependencies
-              run: pnpm install --frozen-lockfile
+      - name: Resolve TAG_NAME and SEMVER
+        id: resolve_version
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_TAG_NAME: ${{ inputs.tag_name }}
+        run: |
+          set -euo pipefail
 
-            - name: Verify package version matches release tag
-              run: |
-                  TAG="${GITHUB_REF_NAME#v}"
-                  PKG="$(node -p "require('./package.json').version")"
-                  echo "tag=$TAG package.json=$PKG"
-                  if [ "$TAG" != "$PKG" ]; then
-                    echo "::error::Release tag v$TAG must match package.json version $PKG"
-                    echo "Bump package.json (and src/pkg.ts) before creating the GitHub Release."
-                    exit 1
-                  fi
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            TAG_NAME="$INPUT_TAG_NAME"
+          else
+            TAG_NAME="$REF_NAME"
+          fi
 
-            - name: Check and build
-              run: pnpm check && pnpm build
+          if [[ ! "$TAG_NAME" =~ ^v ]]; then
+            echo "TAG_NAME must start with 'v': $TAG_NAME"
+            exit 1
+          fi
 
-            # Auth via npm Trusted Publishing (OIDC). Do not set NODE_AUTH_TOKEN —
-            # a token with 2FA would force OTP and skip the OIDC path.
-            - name: Publish to npm
-              run: pnpm publish --access public --no-git-checks --provenance
+          SEMVER="${TAG_NAME#v}"
+          SEMVER_REGEX='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-((0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*))?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$'
+
+          if [[ ! "$SEMVER" =~ $SEMVER_REGEX ]]; then
+            echo "SEMVER is invalid: $SEMVER"
+            echo "Example of valid values: 1.0.1, 0.9.0-alpha.1, 1.0.0+build.1"
+            exit 1
+          fi
+
+          echo "TAG_NAME=$TAG_NAME" >> "$GITHUB_ENV"
+          echo "SEMVER=$SEMVER" >> "$GITHUB_ENV"
+          echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
+          echo "semver=$SEMVER" >> "$GITHUB_OUTPUT"
+
+          echo "TAG_NAME=$TAG_NAME"
+          echo "SEMVER=$SEMVER"
+
+      - name: Update jsr.json version from SEMVER
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          const filePath = "jsr.json";
+          const semver = process.env.SEMVER;
+          const source = fs.readFileSync(filePath, "utf8");
+          const pattern = /"version"\s*:\s*"[^"]+"/;
+
+          if (!pattern.test(source)) {
+            console.error("Could not find version field in jsr.json");
+            process.exit(1);
+          }
+
+          const updated = source.replace(pattern, `"version": "${semver}"`);
+          fs.writeFileSync(filePath, updated);
+          NODE
+
+          echo "Updated jsr.json version to $SEMVER"
+          grep -n '"version"' jsr.json
+
+      - name: Commit updated jsr.json locally
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "AXT-AyaKoto"
+          git config user.email "148830788+AXT-AyaKoto@users.noreply.github.com"
+
+          git add jsr.json
+
+          if git diff --cached --quiet; then
+            echo "No staged changes in jsr.json; skipping local commit."
+          else
+            git commit -m "chore(ci): sync jsr version to $SEMVER for publish"
+            echo "Created local commit to keep worktree clean."
+            git --no-pager log -1 --oneline
+          fi
+
+      - name: Publish package to JSR
+        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.dry_run) }}
+        run: npx jsr publish
+
+      - name: Publish package to JSR (dry-run)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        run: npx jsr publish --dry-run

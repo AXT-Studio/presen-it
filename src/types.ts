@@ -21,7 +21,7 @@ export type AnimationConfig = {
 export type BreakMode = "soft" | "hard";
 
 export type DeckConfig = {
-    /** Document title for viewer HTML; empty falls back to `AyaExpTech Presen'it! — <slug>`. */
+    /** Document title for viewer HTML; empty falls back to `AXT Presen'it! — <slug>`. */
     title: string;
     /** Optional blurb for `<meta name="description">` and `og:description`. */
     description: string;

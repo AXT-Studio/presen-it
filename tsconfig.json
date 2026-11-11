@@ -5,7 +5,7 @@
         "module": "ESNext",
         "moduleResolution": "Bundler",
         "resolveJsonModule": true,
-        "allowImportingTsExtensions": false,
+        "allowImportingTsExtensions": true,
         "verbatimModuleSyntax": true,
         "isolatedModules": true,
         "noEmit": true,
@@ -16,9 +16,8 @@
         "skipLibCheck": true,
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
-        "jsx": "react-jsx",
-        "jsxImportSource": "preact",
+        "jsx": "preserve",
         "types": ["node"]
     },
-    "include": ["src", "tests", "tsup.config.ts", "vitest.config.ts"]
+    "include": ["mod.ts", "src", "tests", "vitest.config.ts", "examples/**/*.ts"]
 }

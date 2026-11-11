@@ -4,8 +4,8 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import remarkParse from "remark-parse";
 import { unified } from "unified";
-import type { AlignOptions, BreakMode, Column, Deck, Diagnostic, Slide } from "../types";
-import { DEFAULT_SLIDE_ALIGN } from "../types";
+import type { AlignOptions, BreakMode, Column, Deck, Diagnostic, Slide } from "../types.ts";
+import { DEFAULT_SLIDE_ALIGN } from "../types.ts";
 import {
     alignFromDirective,
     extractCommentText,
@@ -13,9 +13,9 @@ import {
     mergeAlign,
     parseDirectiveComment,
     type DirectiveOptions,
-} from "./directive";
-import { parseFrontmatter } from "./frontmatter";
-import { applyRevealToSlide } from "./reveal";
+} from "./directive.ts";
+import { parseFrontmatter } from "./frontmatter.ts";
+import { applyRevealToSlide } from "./reveal.ts";
 
 type MutableColumn = {
     optionOverride: DirectiveOptions;

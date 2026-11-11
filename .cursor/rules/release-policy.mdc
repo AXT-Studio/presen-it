@@ -1,14 +1,16 @@
 ---
-description: After 1.0.0, do not auto-merge-and-release unless the user explicitly asks
+description: Do not release or publish without an explicit request
 alwaysApply: true
 ---
 
-# Release policy (post-1.0)
+# Release policy
 
-`@ayaexptech/presenit` has published **1.0.0** (formerly `@axt_ayakoto/presenit`).
+Current v2 package/import: `@ayaexptech/presen-it` (JSR).
+The previous npm package was `@ayaexptech/presenit` (formerly `@axt_ayakoto/presenit`).
 
-1. **Do not** automatically merge + create GitHub Releases / npm publishes just because a PR is green.
-2. Only cut a release when the user **explicitly** asks (or a user rule / issue clearly requests a numbered release).
-3. When releasing, still keep `package.json`, `src/pkg.ts`, the git tag, and the GitHub Release name in sync (`vX.Y.Z`).
+1. Do not push, merge, tag, create GitHub Releases, or publish JSR/npm packages merely because checks pass.
+2. A release or registry publication requires the owner's explicit request. Routine verification stops at JSR dry-run.
+3. Keep `package.json` and `jsr.json` names/versions consistent. `src/pkg.ts` belonged to v1 and no longer exists.
+4. Build and commit `src/generated/viewer.ts` when changing Viewer sources; see `docs/development.md` and `docs/publishing.md`.
 
-Until 1.0 this repo auto-released so the maintainer could dogfood from npm; that phase is over. Prefer opening a PR and waiting for confirmation before tagging.
+`.github/workflows/release.yml` publishes to JSR when a `v*` tag is pushed. Manual dispatch dry-runs unless `dry_run` is false. Do not push a release tag or dispatch a real publish without an explicit request.

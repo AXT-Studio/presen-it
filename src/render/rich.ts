@@ -4,9 +4,9 @@ import { readFile } from "node:fs/promises";
 import { renderMermaidSVG } from "beautiful-mermaid";
 import katex from "katex";
 import type { Code, Html, RootContent } from "mdast";
-import type { ThemeName } from "../types";
-import { getPresenitAt } from "../parse/reveal";
-import { highlightCode } from "./highlighter";
+import type { ThemeName } from "../types.ts";
+import { getPresenitAt } from "../parse/reveal.ts";
+import { highlightCode } from "./highlighter.ts";
 
 export type EnrichResult = {
     nodes: RootContent[];

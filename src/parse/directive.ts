@@ -1,5 +1,5 @@
-import type { AlignOptions, Diagnostic } from "../types";
-import { DEFAULT_SLIDE_ALIGN } from "../types";
+import type { AlignOptions, Diagnostic } from "../types.ts";
+import { DEFAULT_SLIDE_ALIGN } from "../types.ts";
 
 export type DirectiveCommand = "slide-break" | "column-break" | "reveal";
 

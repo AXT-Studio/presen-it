@@ -1,9 +1,9 @@
-import type { Html, Root, RootContent } from "mdast";
+import type { Root, RootContent } from "mdast";
 import { toHast } from "mdast-util-to-hast";
 import { toHtml } from "hast-util-to-html";
-import type { Column, Deck, DeckConfig, Slide } from "../types";
-import { transformAlertBlockquotes } from "./alert";
-import { enrichRichContent, KATEX_CSS_URL } from "./rich";
+import type { Column, Deck, DeckConfig, Slide } from "../types.ts";
+import { transformAlertBlockquotes } from "./alert.ts";
+import { enrichRichContent, KATEX_CSS_URL } from "./rich.ts";
 
 export type RenderedSlide = {
     html: string;
@@ -27,24 +27,36 @@ function escapeHtml(text: string): string {
 }
 
 function sanitizeNodes(nodes: RootContent[], rawHTML: boolean): RootContent[] {
-    if (rawHTML) {
-        return nodes;
-    }
-
-    return nodes.map((node) => {
+    return nodes.flatMap((node): RootContent[] => {
         if (node.type === "html") {
-            // Escape raw HTML into visible text when rawHTML is disabled.
-            return {
-                type: "paragraph",
-                children: [
-                    {
-                        type: "text",
-                        value: (node as Html).value,
-                    },
-                ],
-            };
+            if (node.value.trim().startsWith("<!--")) return [];
+            if (
+                rawHTML ||
+                (node.data as { presenitGenerated?: boolean } | undefined)?.presenitGenerated
+            )
+                return [node];
+            return [{ type: "text", value: node.value } as unknown as RootContent];
         }
-        return node;
+        if (
+            "url" in node &&
+            typeof node.url === "string" &&
+            /^(?:javascript|vbscript|data):/i.test(
+                Array.from(node.url)
+                    .filter((char) => char.charCodeAt(0) > 32)
+                    .join(""),
+            )
+        ) {
+            node = { ...node, url: "" };
+        }
+        if ("children" in node && Array.isArray(node.children)) {
+            return [
+                {
+                    ...node,
+                    children: sanitizeNodes(node.children as RootContent[], rawHTML),
+                } as RootContent,
+            ];
+        }
+        return [node];
     });
 }
 

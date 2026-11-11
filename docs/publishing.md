@@ -1,27 +1,37 @@
-# 公開チェックリスト（メンテナ向け）
+# 公開手順
 
-## 初回セットアップ: npm Trusted Publishing
+パッケージ名・import名は`@ayaexptech/presen-it`（[JSR](https://jsr.io/@ayaexptech/presen-it)）。
+旧npmパッケージ`@ayaexptech/presenit`（v1）とは別物です。公開は`v*`タグのpush、または手動実行でdry-runを外したときだけ行います。
 
-1. npm の [`@ayaexptech/presenit`](https://www.npmjs.com/package/@ayaexptech/presenit) → **Settings → Trusted Publisher**
-2. GitHub Actions を追加:
-    - Organization or user: `AXT-Studio`
-    - Repository: `presen-it`
-    - Workflow filename: `release.yml`
-    - Environment: （未使用なら空）
-3. このリポジトリの Release workflow は `id-token: write` + `pnpm publish --provenance` で OIDC 認証する（`NPM_TOKEN` は不要）
+## 公開物の構成
 
-フォールバックとして Automation トークンを `NPM_TOKEN` に置くやり方もあるが、2FA 付きアカウントでは OTP エラーになりやすい。Trusted Publishing を優先する。
+- `jsr.json`はTSソースの`mod.ts`を公開エントリーとし、`src/client/**`は公開から除外します。
+- ViewerはTS/CSSから生成した`src/generated/viewer.ts`（文字列モジュール）で配布します。
+  JSR利用者にViewerのビルドやHTML/TSエントリー作成を求めません。生成物は必ずコミットします。
+- 相対TS importの拡張子を維持し、公開APIの型を明示します（slow types対策）。
+- `package.json`と`jsr.json`の名前・versionを揃えます。
 
-## 毎回のリリース手順
+## 公開前の確認
 
-1. `package.json` と `src/pkg.ts` のバージョンを上げる
-2. `CHANGELOG.md` を更新する
-3. `main` にマージする
-4. GitHub → **Releases → Draft a new release**
-    - Tag: `vX.Y.Z`（`package.json` の version と一致させる）
-    - Release を Publish する
-5. **Actions → Release** を確認する。npm publish が自動で走る
+```sh
+pnpm install --frozen-lockfile
+pnpm build
+pnpm check
+pnpm test:integration
+pnpm check:jsr
+```
 
-1.0.0 以降は、明示的なリリース依頼があるまでエージェントが勝手にタグ／Release を切らない（`.cursor/rules/release-policy.mdc`）。
+`pnpm test:integration`は`node scripts/build.mjs --package`で`tmp/package/`へJS/型の配布形態を作り、
+tarballを空のプロジェクトへnpm installしてVite・Vite+の操作を試験します。
+これはJSRのnpm互換変換そのものの検証ではないため、公開後に実際のJSRから導入する確認も推奨します。
 
-公式サイトは `site/` を **Actions → GitHub Pages** workflow がデプロイする（https://axt-studio.github.io/presen-it/）。
+## 公開
+
+1. `package.json`と`jsr.json`のversionを更新し、`CHANGELOG.md`へ記載する
+   （プレリリースは`2.0.0-rc.1`のようなSemVer形式）。
+2. 上記の確認を通してコミットする。
+3. そのversionの`v*`タグ（例: `v2.0.0-rc.1`）をpushする。`.github/workflows/release.yml`がタグから`jsr.json`のversionを合わせて`npx jsr publish`する。手元確認は同じworkflowの手動実行で、既定は`--dry-run`。
+4. 別の空プロジェクトで`pnpm add -D jsr:@ayaexptech/presen-it`（Vite+は`vp add`）を行い、dev/build/previewを確認する。
+
+Vite+プロジェクトでは公式テンプレートのVite core alias/overrideを使います。
+JSRの導入方法・ESM・npm依存・型制約は[公式公開ガイド](https://jsr.io/docs/publishing-packages)を参照してください。

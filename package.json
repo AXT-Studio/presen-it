@@ -1,7 +1,7 @@
 {
-    "name": "@ayaexptech/presenit",
-    "version": "1.1.3",
-    "description": "Turn readable Markdown into beautiful presentation slides and PDFs.",
+    "name": "@ayaexptech/presen-it",
+    "version": "2.0.0-rc.1",
+    "description": "A Vite plugin for Markdown presentations, presenter view, and browser PDF export.",
     "keywords": [
         "markdown",
         "marp",
@@ -11,7 +11,7 @@
         "slides",
         "slidev"
     ],
-    "homepage": "https://axt-studio.github.io/presen-it/",
+    "homepage": "https://github.com/AXT-Studio/presen-it#readme",
     "bugs": {
         "url": "https://github.com/AXT-Studio/presen-it/issues"
     },
@@ -21,70 +21,48 @@
         "type": "git",
         "url": "git+https://github.com/AXT-Studio/presen-it.git"
     },
-    "bin": {
-        "presenit": "./dist/cli.js"
-    },
     "files": [
-        "dist/cli.js",
-        "dist/cli.js.map",
-        "dist/index.js",
-        "dist/index.js.map",
-        "dist/index.d.ts",
-        "src/viewer",
-        "src/shared",
-        "src/templates/starter-slide.md",
-        "llms.txt",
-        "LICENSE",
+        "dist",
         "README.md",
-        "CHANGELOG.md"
+        "llms.txt",
+        "LICENSE"
     ],
     "type": "module",
     "exports": {
         ".": {
-            "types": "./dist/index.d.ts",
-            "import": "./dist/index.js"
-        },
-        "./package.json": "./package.json"
-    },
-    "publishConfig": {
-        "access": "public",
-        "registry": "https://registry.npmjs.org/"
+            "types": "./dist/mod.d.ts",
+            "import": "./dist/mod.js"
+        }
     },
     "scripts": {
-        "build": "tsup",
-        "dev:cli": "tsx src/cli.ts",
-        "presenit": "node ./dist/cli.js",
-        "prepublishOnly": "pnpm check && pnpm build",
-        "format": "oxfmt .",
-        "format:check": "oxfmt --check .",
-        "lint": "oxlint .",
+        "build": "node scripts/build.mjs",
+        "dev": "vite examples/slides",
+        "build:example": "vite build examples/slides",
+        "preview": "vite preview examples/slides",
+        "format": "oxfmt src tests scripts mod.ts examples",
+        "format:check": "oxfmt --check src tests scripts mod.ts examples",
+        "lint": "oxlint src tests scripts mod.ts",
         "typecheck": "tsc --noEmit",
         "test": "vitest run",
-        "test:watch": "vitest",
-        "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test"
+        "test:integration": "node --experimental-strip-types --test tests/integration/*.test.ts",
+        "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
+        "check:jsr": "deno publish --dry-run --allow-dirty"
     },
     "dependencies": {
-        "@preact/preset-vite": "^2.10.6",
-        "@preact/signals": "^2.10.0",
         "beautiful-mermaid": "^1.1.3",
-        "citty": "^0.2.2",
-        "consola": "^3.4.2",
         "hast-util-to-html": "^9.0.5",
         "katex": "0.18.1",
         "mdast-util-to-hast": "^13.2.1",
         "mdast-util-to-string": "^4.0.0",
-        "preact": "^10.29.7",
-        "puppeteer": "^25.4.0",
-        "rehype-stringify": "^10.0.1",
+        "parse5": "^8.0.0",
         "remark-breaks": "^4.0.0",
         "remark-gfm": "^4.0.1",
         "remark-math": "^6.0.0",
         "remark-parse": "^11.0.0",
-        "remark-rehype": "^11.1.2",
         "shiki": "^4.3.1",
+        "tinyglobby": "^0.2.15",
         "unified": "^11.0.5",
         "unist-util-visit": "^5.1.0",
-        "vite": "^8.1.5",
         "yaml": "^2.9.0"
     },
     "devDependencies": {
@@ -93,15 +71,21 @@
         "@types/mdast": "^4.0.4",
         "@types/node": "^24.0.0",
         "@types/unist": "^3.0.3",
+        "esbuild": "^0.27.7",
         "oxfmt": "^0.61.0",
         "oxlint": "^1.0.0",
-        "tsup": "^8.5.0",
+        "puppeteer-core": "^25.4.0",
         "tsx": "^4.20.0",
         "typescript": "^5.8.0",
+        "vite": "8.1.5",
+        "vite-plus": "^1.6.0",
         "vitest": "^3.2.0"
     },
+    "peerDependencies": {
+        "vite": "^8.0.0"
+    },
     "engines": {
-        "node": ">=22"
+        "node": ">=22.18.0"
     },
     "packageManager": "pnpm@11.11.0"
 }
