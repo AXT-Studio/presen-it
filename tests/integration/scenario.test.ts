@@ -502,6 +502,14 @@ export default defineConfig({ base: ${JSON.stringify(base)}, plugins: [presenit(
             await count(page, "2 / 3 · 2 / 3");
             await mkdir(path.join(fixture, "src/new"), { recursive: true });
             await writeFile(path.join(fixture, "src/new/index.md"), "# New glob deck");
+            // The watcher registers a new deck asynchronously. Opening the URL
+            // before then gets a non-deck page that can miss the reload message,
+            // so wait until the dev server actually serves the new deck.
+            const added = Date.now() + 15_000;
+            while (!(await (await fetch(dev.url + "new/")).text()).includes("presenit-data")) {
+                assert.ok(Date.now() < added, "The added deck was not served by the dev server.");
+                await new Promise((resolve) => setTimeout(resolve, 100));
+            }
             const extra = await browser.newPage();
             await open(extra, dev.url + "new/");
             await rm(path.join(fixture, "src/new/index.md"));
