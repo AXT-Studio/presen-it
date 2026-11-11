@@ -1,7 +1,7 @@
 # Presen'it! v2 仕様
 
 この仕様は旧1.0 scopeおよびPoCの制限より優先する。受け入れ条件の基準は
-[`presenit-scenario.md`](../presenit-scenario.md)と[`poc/COMPATIBILITY.md`](../poc/COMPATIBILITY.md)。
+[`presenit-scenario.md`](../presenit-scenario.md)と[Markdownの意味的互換性](./markdown-compatibility.md)。
 
 ## パッケージと利用
 

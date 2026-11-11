@@ -9,7 +9,7 @@
 5. [x] 印刷UIと印刷レイアウト、ローカル配布形態、Vite/Vite+の利用フローを検証する。
 6. [x] README/llms/CIを移行し、検証結果と制限を記録する。
 
-機能単位でコミットする。PoCとシナリオは設計根拠として保存する。
+機能単位でコミットする。PoCの検証記録は[歴史資料](./archive/poc-report.md)、入力契約は[Markdown互換性](./markdown-compatibility.md)として保存する。利用シナリオも保持する。
 
 ## 技術判断
 
