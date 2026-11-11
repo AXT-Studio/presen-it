@@ -232,7 +232,7 @@ Presenterには次の表示、経過時間、スピーカーノートが表示�
 
 | キー | 操作 |
 | --- | --- |
-| ← / → / Space / Enter | 前後（Revealのステップを優先） |
+| ← / → / Space / Enter / PageUp / PageDown | 前後（Revealのステップを優先）。PageUp/PageDownはプレゼンリモコン向け |
 | Home / End | 最初 / 最後 |
 | O | Overview |
 | P | 発表者ビューを別タブで開く |

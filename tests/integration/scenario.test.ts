@@ -414,6 +414,15 @@ export default defineConfig({ base: ${JSON.stringify(base)}, plugins: [presenit(
             await count(page, "3 / 3 · 0 / 0");
             await page.keyboard.press("ArrowLeft");
             await count(page, "2 / 3 · 3 / 3");
+            // Presentation remotes send PageUp / PageDown.
+            await page.keyboard.press("PageUp");
+            await count(page, "2 / 3 · 2 / 3");
+            await page.keyboard.press("PageDown");
+            await count(page, "2 / 3 · 3 / 3");
+            await page.keyboard.press("PageDown");
+            await count(page, "3 / 3 · 0 / 0");
+            await page.keyboard.press("PageUp");
+            await count(page, "2 / 3 · 3 / 3");
             await page.keyboard.press("o");
             await page.waitForSelector("dialog[open]");
             await click(page, "スライド 1: First slide");

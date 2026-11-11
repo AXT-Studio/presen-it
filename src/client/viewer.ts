@@ -222,7 +222,7 @@ const toolbar = element("nav", "presenit-toolbar");
 toolbar.setAttribute("aria-label", "発表の操作");
 main.append(toolbar);
 const previous = iconButton("前へ", "previous", () => move(-1), toolbar, {
-    aria: "ArrowLeft",
+    aria: "ArrowLeft PageUp",
     label: "←",
 });
 const position = element("div", "presenit-position");
@@ -235,7 +235,7 @@ const steps = element("span", "presenit-steps");
 position.append(steps);
 toolbar.append(position);
 const forward = iconButton("次へ", "next", () => move(1), toolbar, {
-    aria: "ArrowRight Space",
+    aria: "ArrowRight Space PageDown",
     label: "→",
 });
 const separator = element("span", "presenit-separator");
@@ -844,6 +844,9 @@ window.addEventListener("keydown", (event) => {
             " ": () => move(1),
             enter: () => move(1),
             arrowleft: () => move(-1),
+            // Presentation remotes (clickers) send PageDown / PageUp.
+            pagedown: () => move(1),
+            pageup: () => move(-1),
             home: () => navigate(0),
             end: () => navigate(slides.length - 1),
             o: () => openOverview(),

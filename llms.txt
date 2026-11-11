@@ -111,7 +111,7 @@ Example:
 
 ### Viewer and PDF
 
-Arrows/Space/Enter navigate Reveal steps then slides. Home/End jump to first/last slide.
+Arrows/Space/Enter/PageUp/PageDown (presentation remotes) navigate Reveal steps then slides. Home/End jump to first/last slide.
 O: overview; P: separate Presenter; F: fullscreen; L: laser; B: blackout; Escape: clear blackout.
 T/R: pause/reset presenter timer. Same-origin tabs sync page, Reveal, blackout and laser via BroadcastChannel.
 Presenter shows notes and next step. URL hash is 1-based slide number; ?presenter selects Presenter.
