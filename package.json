@@ -32,6 +32,10 @@
         ".": {
             "types": "./dist/mod.d.ts",
             "import": "./dist/mod.js"
+        },
+        "./decks": {
+            "types": "./dist/decks.d.ts",
+            "import": "./dist/decks.js"
         }
     },
     "scripts": {
@@ -39,9 +43,9 @@
         "dev": "vite examples/slides",
         "build:example": "vite build examples/slides",
         "preview": "vite preview examples/slides",
-        "format": "oxfmt src tests scripts mod.ts examples",
-        "format:check": "oxfmt --check src tests scripts mod.ts examples",
-        "lint": "oxlint src tests scripts mod.ts",
+        "format": "oxfmt src tests scripts mod.ts decks.ts examples",
+        "format:check": "oxfmt --check src tests scripts mod.ts decks.ts examples",
+        "lint": "oxlint src tests scripts mod.ts decks.ts",
         "typecheck": "tsc --noEmit",
         "test": "vitest run",
         "test:integration": "node --experimental-strip-types --test tests/integration/*.test.ts",

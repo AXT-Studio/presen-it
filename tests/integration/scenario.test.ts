@@ -168,6 +168,16 @@ graph LR
   A --> B
 \`\`\`
 `;
+/** Metadata of tests/fixtures/real-talk, which has no title. */
+const realTitle = "AXT Presen'it! — /slides/real/";
+const realTheme = "dark";
+type Listed = {
+    same: boolean;
+    decks: { url: string; route: string; title: string; slideCount: number; theme: string }[];
+};
+async function listed(page: import("puppeteer-core").Page): Promise<Listed> {
+    return JSON.parse(await page.evaluate(() => document.body.dataset.decks ?? "{}"));
+}
 async function open(page: import("puppeteer-core").Page, url: string) {
     await page.goto(url);
     await page.waitForSelector("html.presenit-ready");
@@ -288,7 +298,35 @@ test(
             path.join(fixture, "index.html"),
             '<!doctype html><html><head><title>Host app</title></head><body><h1>Host app</h1><script type="module" src="/main.js"></script></body></html>',
         );
-        await writeFile(path.join(fixture, "main.js"), 'document.body.dataset.hostReady="yes"');
+        // The host app lists decks through both import forms; they must be one module.
+        await writeFile(
+            path.join(fixture, "main.js"),
+            `import { decks } from "virtual:presenit/decks";
+import { decks as typed } from "@ayaexptech/presen-it/decks";
+document.body.dataset.decks = JSON.stringify({
+    same: decks === typed,
+    decks: decks.map(({ url, route, title, slideCount, theme }) => ({ url, route, title, slideCount, theme })),
+});
+document.body.dataset.hostReady = "yes";`,
+        );
+        await mkdir(path.join(fixture, "src"), { recursive: true });
+        await writeFile(
+            path.join(fixture, "src/env.d.ts"),
+            'declare module "virtual:presenit/decks" {\n    export * from "@ayaexptech/presen-it/decks";\n}\n',
+        );
+        await writeFile(
+            path.join(fixture, "src/decks-types.ts"),
+            `import { decks } from "virtual:presenit/decks";
+import { decks as typed, type PresenitDeck } from "@ayaexptech/presen-it/decks";
+import type { PresenitDeck as RootDeck } from "@ayaexptech/presen-it";
+const list: readonly RootDeck[] = decks;
+const first: PresenitDeck | undefined = typed[0];
+const fields: [string, string, string, string, number, string, number] | undefined = first && [
+    first.url, first.route, first.title, first.description, first.slideCount, first.source, first.width,
+];
+export { list, fields };
+`,
+        );
         await cp(
             path.join(root, "tests/fixtures/real-talk"),
             path.join(fixture, "src/slides/real"),
@@ -319,7 +357,7 @@ export default defineConfig({ base: ${JSON.stringify(base)}, plugins: [presenit(
                     noEmit: true,
                     types: ["node"],
                 },
-                include: ["vite.config.ts"],
+                include: ["vite.config.ts", "src/**/*.ts"],
             }),
         );
         execFileSync(
@@ -340,9 +378,44 @@ export default defineConfig({ base: ${JSON.stringify(base)}, plugins: [presenit(
         page.on("pageerror", (error) => errors.push(String(error)));
         const dev = await serve(fixture);
         let presenter: import("puppeteer-core").Page | undefined;
+        let host: import("puppeteer-core").Page | undefined;
         try {
             await page.goto(dev.url);
             await page.waitForFunction(() => document.body.dataset.hostReady === "yes");
+            assert.deepEqual(await listed(page), {
+                same: true,
+                decks: [
+                    {
+                        url: "/demo/slides/example/",
+                        route: "/slides/example/",
+                        title: "Acceptance deck",
+                        slideCount: 3,
+                        theme: "light",
+                    },
+                    {
+                        // The fixture's provenance note is selected by src/**/*.md too.
+                        url: "/demo/slides/real/SOURCE/",
+                        route: "/slides/real/SOURCE/",
+                        title: "AXT Presen'it! — /slides/real/SOURCE/",
+                        slideCount: 1,
+                        theme: "light",
+                    },
+                    {
+                        url: "/demo/slides/real/",
+                        route: "/slides/real/",
+                        title: realTitle,
+                        slideCount: 30,
+                        theme: realTheme,
+                    },
+                    {
+                        url: "/demo/slides/second/",
+                        route: "/slides/second/",
+                        title: "AXT Presen'it! — /slides/second/",
+                        slideCount: 1,
+                        theme: "light",
+                    },
+                ],
+            });
             await open(page, dev.url + "slides/example/");
             await page.waitForFunction(
                 () =>
@@ -477,6 +550,10 @@ export default defineConfig({ base: ${JSON.stringify(base)}, plugins: [presenit(
             assert.equal(await presenter.$eval(".presenit-timer", (el) => el.textContent), paused);
             await click(presenter, "タイマーをリセット");
             assert.equal(await presenter.$eval(".presenit-timer", (el) => el.textContent), "00:00");
+            // A separate host tab follows deck metadata while the decks are edited.
+            host = await browser.newPage();
+            await host.goto(dev.url);
+            await host.waitForFunction(() => document.body.dataset.hostReady === "yes");
             // Content and frontmatter edits both reach the open page; the theme
             // CSS is a separate (<link>) module that must not stay cached.
             await writeFile(
@@ -500,6 +577,9 @@ export default defineConfig({ base: ${JSON.stringify(base)}, plugins: [presenit(
                 );
             });
             await count(page, "2 / 3 · 2 / 3");
+            await host.waitForFunction(
+                () => JSON.parse(document.body.dataset.decks ?? "{}").decks?.[0]?.theme === "dark",
+            );
             await mkdir(path.join(fixture, "src/new"), { recursive: true });
             await writeFile(path.join(fixture, "src/new/index.md"), "# New glob deck");
             // The watcher registers a new deck asynchronously. Opening the URL
@@ -510,15 +590,24 @@ export default defineConfig({ base: ${JSON.stringify(base)}, plugins: [presenit(
                 assert.ok(Date.now() < added, "The added deck was not served by the dev server.");
                 await new Promise((resolve) => setTimeout(resolve, 100));
             }
+            await host.waitForFunction(() =>
+                document.body.dataset.decks?.includes('"url":"/demo/new/"'),
+            );
             const extra = await browser.newPage();
             await open(extra, dev.url + "new/");
             await rm(path.join(fixture, "src/new/index.md"));
             await extra.waitForFunction(() => !document.querySelector("html.presenit-ready"));
             await extra.close();
+            await host.waitForFunction(
+                () =>
+                    document.body.dataset.hostReady === "yes" &&
+                    !document.body.dataset.decks?.includes('"/demo/new/"'),
+            );
             t.diagnostic(
-                "Dev, glob addition/removal, image, reveal, overview, presenter, laser, blackout, timer and live reload (content and frontmatter) passed.",
+                "Dev, deck list module, glob addition/removal, image, reveal, overview, presenter, laser, blackout, timer and live reload (content and frontmatter) passed.",
             );
         } finally {
+            await host?.close();
             await Promise.race([
                 presenter?.close(),
                 new Promise((resolve) => setTimeout(resolve, 2000)),
@@ -539,6 +628,20 @@ export default defineConfig({ base: ${JSON.stringify(base)}, plugins: [presenit(
             );
             const preview = await serve(fixture, true);
             try {
+                await page.goto(preview.url);
+                await page.waitForFunction(() => document.body.dataset.hostReady === "yes");
+                const urls = (await listed(page)).decks.map((deck) => deck.url);
+                assert.deepEqual(
+                    urls,
+                    [
+                        "slides/example/",
+                        "slides/real/SOURCE/",
+                        "slides/real/",
+                        "slides/second/",
+                    ].map((route) => (base === "./" ? preview.url : base) + route),
+                );
+                await open(page, new URL(urls[3]!, page.url()).href);
+                assert.match(await page.title(), /slides\/second/);
                 await open(page, preview.url + "slides/example/");
                 await page.waitForFunction(
                     () =>
@@ -611,7 +714,7 @@ export default defineConfig({ base: ${JSON.stringify(base)}, plugins: [presenit(
                 await preview.close();
             }
             t.diagnostic(
-                `Static build/preview, assets, rich content, PDF operation and Markdown links passed with base ${base}.`,
+                `Static build/preview, deck list URLs, assets, rich content, PDF operation and Markdown links passed with base ${base}.`,
             );
         }
         const realPreview = await serve(fixture, true);

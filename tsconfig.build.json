@@ -8,6 +8,6 @@
         "rootDir": ".",
         "noUnusedLocals": false
     },
-    "include": ["mod.ts", "src/**/*.ts"],
+    "include": ["mod.ts", "decks.ts", "src/**/*.ts"],
     "exclude": ["src/client"]
 }

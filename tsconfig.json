@@ -17,7 +17,12 @@
         "esModuleInterop": true,
         "forceConsistentCasingInFileNames": true,
         "jsx": "preserve",
-        "types": ["node"]
+        "types": ["node"],
+        // Lets examples import the package by name, as applications do.
+        "paths": {
+            "@ayaexptech/presen-it": ["./mod.ts"],
+            "@ayaexptech/presen-it/decks": ["./decks.ts"]
+        }
     },
-    "include": ["mod.ts", "src", "tests", "vitest.config.ts", "examples/**/*.ts"]
+    "include": ["mod.ts", "decks.ts", "src", "tests", "vitest.config.ts", "examples/**/*.ts"]
 }

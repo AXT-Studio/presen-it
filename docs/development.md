@@ -16,7 +16,7 @@ Markdown・Vite設定・通常のパッケージ設定だけです。ViewerのHT
 ```sh
 pnpm install --frozen-lockfile
 pnpm build              # Viewerを生成し、dist/へJSと型を出力
-pnpm dev                # examples/slides を起動。/slides/example/ と /slides/team/
+pnpm dev                # examples/slides を起動。/（デッキ一覧の例）、/slides/example/、/slides/team/
 pnpm build:example      # examples/slides/dist/ へ静的出力（pnpm previewで確認）
 pnpm check              # format:check + lint + typecheck + Vitest
 pnpm test:integration   # tarball導入、Vite/Vite+のdev/build/preview、Chromeでの発表操作・同期・印刷
@@ -36,8 +36,10 @@ Markdown
 
 | パス | 役割 |
 | --- | --- |
-| `mod.ts` | 公開エントリー（`presenit`と`PresenitOptions`） |
+| `mod.ts` | 公開エントリー（`presenit`、`PresenitOptions`、`PresenitDeck`） |
+| `decks.ts` | 公開サブパス`./decks`。型を持つスタブで、プラグインが`virtual:presenit/decks`へ差し替える |
 | `src/vite/plugin.ts` | glob・URL・入力の合成、仮想HTML/CSS、相対アセット・リンク、watch、dev middleware |
+| `src/vite/decks.ts` | デッキ一覧のメタデータ抽出と仮想モジュールのコード生成、relative baseの解決 |
 | `src/types.ts` | Deck/Slide/Column/configの型と既定値 |
 | `src/parse/` | YAML、Markdown AST、ディレクティブ、ノート、sticky Reveal |
 | `src/render/` | スライドHTML、数式・Mermaid・コード・Alerts、**スライド自体**のテーマCSS（`theme.ts`） |
@@ -52,6 +54,17 @@ Markdown
 - テーマCSSは`<link>`で読まれるため、devではViteが`?direct`付きの別モジュールとして扱います。
   Markdown変更時は`invalidateThemes()`でクエリ違いを含めて無効化します（frontmatterの反映に必要）。
 - 新しいMarkdownはwatcherの`add`通知後に登録されます。作成直後にURLを開くと、まれに再読込が必要です。
+- **デッキ一覧**（`virtual:presenit/decks`）:
+  - JSRはアンビエントモジュール宣言（`declare module "virtual:..."`）を拒否するため、型は実体のある
+    `decks.ts`（`@ayaexptech/presen-it/decks`）に置き、`resolveId`で同じ仮想モジュールへ差し替えます。
+    別名でインストールされた場合も、解決先がこのスタブなら差し替えます。
+  - メタデータはレンダリングせず`parseSlideMarkdown`だけで読み、Markdownの内容をキーにキャッシュします。
+  - `addWatchFile`でMarkdownがモジュールグラフ上の依存になりますが、Viteは仮想モジュールを
+    soft invalidateするだけなので、`hotUpdate`でその依存を外し、メタデータが変わったときだけ
+    仮想モジュール自体を更新対象にします（本文の編集で一覧ページを再読込しないため）。
+    追加・削除はwatcherで再探索後に無効化します。`load`は再探索の完了（`discovered`）を待ちます。
+  - `base: "./"`のビルドでは`new URL(<placeholder>, import.meta.url)`を出力し、`renderChunk`で
+    チャンク位置から出力ルートへの相対パスに置換します（Vite本体のアセットURLと同じ方式）。
 
 ## Viewerを変更するとき
 

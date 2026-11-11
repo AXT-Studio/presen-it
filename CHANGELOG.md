@@ -13,6 +13,9 @@
 - Dev: invalidate every variant of the theme CSS module (including Vite's `?direct` link request) so
   frontmatter changes such as `theme`, `hue` and `fontFamily` reach open slides after the reload.
 - Save PDFs through browser printing, with all Reveal steps and one slide per page.
+- Expose deck metadata (title, description, URL with Vite `base`, slide count, theme, size and raw
+  frontmatter) to app code as `virtual:presenit/decks`, typed via `@ayaexptech/presen-it/decks`;
+  dev updates follow Markdown additions, removals and metadata edits (#114).
 - Preserve Markdown/frontmatter/directive semantics and defaults; update only the fallback product title.
 - Verify Vite, Vite+, local tarball installation, consumer types, real authored slides and JSR dry-run.
 - Remove automatic npm publishing; JSR publication is a manual step (see `docs/publishing.md`).
