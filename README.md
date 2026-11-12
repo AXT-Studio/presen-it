@@ -14,6 +14,8 @@ Markdownにコメント形式の指示を少し加えるだけで、改ページ
 > AIへの指示を行った私(綾坂こと)自身が使用しているためある程度品質については保証しますが、コードベース管理のほとんどをAIエージェントに委任しているプロダクトであることには留意してください。  
 > なお、使用モデルはGPT-6.1 Sol (Codex)・Claude Opus 5.5 (Claude Code)です。
 
+https://axt-studio.github.io/presen-it/
+
 ## License
 
 copyright (c) 2026- Ayasaka-Koto(AyaExpTech).
