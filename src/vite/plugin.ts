@@ -1,5 +1,5 @@
 import { existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
@@ -18,6 +18,16 @@ import {
     replaceRelativeBase,
     type DeckMetadata,
 } from "./decks.ts";
+import {
+    captureFirstSlides,
+    findChrome,
+    OG_IMAGE_FILE,
+    ogImageSize,
+    ogMeta,
+    publicURL,
+    validateSiteUrl,
+    withoutOgImage,
+} from "./og-image.ts";
 
 /** Markdown selection and the directory from which output routes are derived. */
 export interface PresenitOptions {
@@ -27,6 +37,18 @@ export interface PresenitOptions {
     root?: string;
     /** Exclude patterns, relative to Vite root. */
     excludes?: string[];
+    /**
+     * Public URL of the site, such as `"https://example.com"`, used to make `og:url` and
+     * `og:image` absolute. With an absolute-path `base` this is the origin; with a relative
+     * `base` (`./`) it is the URL of the build output root. Not needed when `base` is a full URL.
+     */
+    siteUrl?: string;
+    /**
+     * Screenshot each deck's first slide as its `og:image` during `vite build`, with the
+     * Chrome / Chromium at `CHROME_PATH` or a well-known location. Default: `true`.
+     * Skipped with a warning when no browser is found.
+     */
+    ogImage?: boolean;
 }
 interface Entry {
     source: string;
@@ -37,6 +59,8 @@ interface Document {
     html: string;
     css: string;
     dependencies: Set<string>;
+    width: number;
+    height: number;
 }
 const JS_URL = "/@presenit/viewer.js";
 const CSS_URL = "/@presenit/viewer.css";
@@ -61,6 +85,8 @@ export function presenit(options: PresenitOptions = {}): Plugin {
     let root = "";
     let sourceRoot = "";
     let entries: Entry[] = [];
+    /** The browser for OGP images; set only in builds that generate them. */
+    let chrome: string | undefined;
     const documents = new Map<string, Promise<Document>>();
     const assetDependencies = new Map<string, Set<string>>();
     const metadata = new Map<string, { markdown: string; value: DeckMetadata }>();
@@ -175,6 +201,21 @@ export function presenit(options: PresenitOptions = {}): Plugin {
             css = imports + "\n" + katexCss + "\n" + css.replace(/^@import[^\n]*;[ \t]*$/gm, "");
         }
         const title = deckTitle(deck.config, entry.route);
+        const imagePath = entry.route.slice(1) + OG_IMAGE_FILE;
+        const meta = ogMeta({
+            title,
+            description: deck.config.description,
+            url: publicURL(config.base, options.siteUrl, entry.route.slice(1)),
+            image: chrome
+                ? {
+                      // Without an origin, fall back to a URL relative to the site or the page.
+                      url:
+                          publicURL(config.base, options.siteUrl, imagePath) ??
+                          (config.base.startsWith("/") ? config.base + imagePath : OG_IMAGE_FILE),
+                      ...ogImageSize(deck.config.width, deck.config.height),
+                  }
+                : undefined,
+        });
         const slides = rendered.slides
             .map((slide) => rewrite(slide.html, entry, dependencies))
             .join("\n");
@@ -184,9 +225,15 @@ export function presenit(options: PresenitOptions = {}): Plugin {
             route: entry.route,
         };
         // The theme attributes let the Viewer chrome match the deck from the first paint.
-        const html = `<!doctype html><html lang="ja" data-presenit-theme="${escape(deck.config.theme)}" style="--presenit-viewer-hue: ${Number(deck.config.hue) || 0}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escape(title)}</title><meta property="og:title" content="${escape(title)}">${deck.config.description ? `<meta name="description" content="${escape(deck.config.description)}"><meta property="og:description" content="${escape(deck.config.description)}">` : ""}<link rel="stylesheet" href="${CSS_URL}"><link rel="stylesheet" href="${themeURL(entry)}"><style>@page { size: ${deck.config.width}px ${deck.config.height}px; margin: 0; }</style></head><body><main id="presenit-stage" aria-label="スライド"><div class="presenit-deck">${slides}</div></main><script id="presenit-data" type="application/json">${json(data)}</script><script type="module" src="${JS_URL}"></script><noscript>発表用の操作にはJavaScriptを有効にしてください。印刷ではすべてのスライドを表示できます。</noscript></body></html>`;
+        const html = `<!doctype html><html lang="ja" data-presenit-theme="${escape(deck.config.theme)}" style="--presenit-viewer-hue: ${Number(deck.config.hue) || 0}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escape(title)}</title>${meta}<link rel="stylesheet" href="${CSS_URL}"><link rel="stylesheet" href="${themeURL(entry)}"><style>@page { size: ${deck.config.width}px ${deck.config.height}px; margin: 0; }</style></head><body><main id="presenit-stage" aria-label="スライド"><div class="presenit-deck">${slides}</div></main><script id="presenit-data" type="application/json">${json(data)}</script><script type="module" src="${JS_URL}"></script><noscript>発表用の操作にはJavaScriptを有効にしてください。印刷ではすべてのスライドを表示できます。</noscript></body></html>`;
         assetDependencies.set(entry.source, dependencies);
-        return { html, css, dependencies };
+        return {
+            html,
+            css,
+            dependencies,
+            width: deck.config.width,
+            height: deck.config.height,
+        };
     }
     function document(entry: Entry): Promise<Document> {
         if (!documents.has(entry.source))
@@ -254,6 +301,7 @@ export function presenit(options: PresenitOptions = {}): Plugin {
         async config(user) {
             if (user.build?.lib || user.build?.ssr)
                 throw new Error("[presenit] Client HTML builds are required.");
+            if (options.siteUrl !== undefined) validateSiteUrl(options.siteUrl);
             root = path.resolve(user.root ?? process.cwd());
             sourceRoot = path.resolve(root, options.root ?? "src");
             entries = await discover();
@@ -283,12 +331,28 @@ export function presenit(options: PresenitOptions = {}): Plugin {
         },
         configResolved(resolved) {
             config = resolved;
+            chrome = undefined;
+            if (resolved.command === "build" && options.ogImage !== false && entries.length) {
+                chrome = findChrome();
+                if (!chrome)
+                    resolved.logger.warn(
+                        "[presenit] Chrome / Chromium was not found, so og:image is skipped. Set CHROME_PATH to generate it, or ogImage: false to silence this.",
+                    );
+                else if (!publicURL(resolved.base, options.siteUrl, ""))
+                    resolved.logger.warn(
+                        "[presenit] og:image is a relative URL, which most social networks ignore. Set the siteUrl option to the public URL of the site.",
+                    );
+            }
             for (const entry of entries) {
-                if (
-                    resolved.publicDir &&
-                    existsSync(path.join(resolved.publicDir, "." + entry.route, "index.html"))
-                )
+                const directory = resolved.publicDir
+                    ? path.join(resolved.publicDir, "." + entry.route)
+                    : "";
+                if (directory && existsSync(path.join(directory, "index.html")))
                     throw new Error("[presenit] Public HTML route already exists: " + entry.route);
+                if (chrome && directory && existsSync(path.join(directory, OG_IMAGE_FILE)))
+                    throw new Error(
+                        `[presenit] Public file conflicts with the generated OGP image: ${entry.route}${OG_IMAGE_FILE}`,
+                    );
             }
         },
         async resolveId(id, importer) {
@@ -336,6 +400,27 @@ export function presenit(options: PresenitOptions = {}): Plugin {
             const next = readMetadata(entry, await read());
             if (previous && JSON.stringify(previous) === JSON.stringify(next)) return others;
             return [...others, decks];
+        },
+        /** Screenshots the first slides once the HTML and assets are on disk. */
+        async writeBundle(output) {
+            if (!chrome || !output.dir || !entries.length) return;
+            const outDir = output.dir;
+            const decks = await Promise.all(
+                entries.map(async (entry) => ({ route: entry.route, ...(await document(entry)) })),
+            );
+            let failures: Map<string, unknown>;
+            try {
+                failures = await captureFirstSlides({ chrome, outDir, base: config.base, decks });
+            } catch (error) {
+                failures = new Map(decks.map((deck) => [deck.route, error]));
+            }
+            for (const [route, error] of failures) {
+                config.logger.warn(
+                    `[presenit] Could not generate the OGP image of ${route}, so og:image is omitted: ${error instanceof Error ? error.message : String(error)}`,
+                );
+                const file = path.join(outDir, "." + route, "index.html");
+                await writeFile(file, withoutOgImage(await readFile(file, "utf8")));
+            }
         },
         renderChunk(code, chunk) {
             const replaced = replaceRelativeBase(code, chunk.fileName);

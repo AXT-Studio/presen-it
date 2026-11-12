@@ -622,6 +622,17 @@ export default defineConfig({ base: ${JSON.stringify(base)}, plugins: [presenit(
                 "utf8",
             );
             assert.doesNotMatch(output, /@presenit|@vite\/client|\/@fs/);
+            // The first slide is screenshotted as og:image (1200 px wide; IHDR width at byte 16).
+            assert.match(
+                output,
+                base === "./"
+                    ? /<meta property="og:image" content="ogp\.png">/
+                    : /<meta property="og:image" content="\/demo\/slides\/example\/ogp\.png">/,
+            );
+            for (const deck of ["example", "second", "real"]) {
+                const png = await readFile(path.join(fixture, "dist/slides", deck, "ogp.png"));
+                assert.equal(png.readUInt32BE(16), 1200);
+            }
             assert.match(
                 await readFile(path.join(fixture, "dist/slides/second/index.html"), "utf8"),
                 /Other deck/,

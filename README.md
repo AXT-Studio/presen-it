@@ -136,6 +136,7 @@ pnpm exec vite
 | `root`     | `"src"`               | デッキのURLを組み立てる基準ディレクトリ |
 
 いずれも**Viteのプロジェクトルート**からの相対パスです。
+SNS共有用の`siteUrl`・`ogImage`オプションは[SNSで共有する](#snsで共有する)を参照してください。
 プラグインの`root`は、Vite自体の`root`とは別の設定です。
 `node_modules`・`dist`・`.git`以下は常に除外されます。
 
@@ -364,7 +365,7 @@ footer: 綾坂こと / AyaExpTech
 
 | キー                      | 既定値                                     | 意味                                                                     |
 | ------------------------- | ------------------------------------------ | ------------------------------------------------------------------------ |
-| `title`                   | `""`                                       | 閲覧ページの`<title>`と`og:title`。空なら`AXT Presen'it! — <route>`      |
+| `title`                   | `""`                                       | 閲覧ページの`<title>`・`og:title`。空なら`AXT Presen'it! — <route>`      |
 | `description`             | `""`                                       | 設定時のみmeta descriptionと`og:description`に出力                       |
 | `theme`                   | `light`                                    | `light`または`dark`                                                      |
 | `hue`                     | `210`                                      | アクセントカラーの色相。360で循環（例：`370`は`10`）                     |
@@ -417,6 +418,42 @@ export default defineConfig({
 `base: "./"`による相対パスでのビルドにも対応しています。
 通常の`index.html`がある場合は、スライドと一緒にビルドされるため、デッキの一覧ページも作れます。
 Presen'it!はクライアント向けのHTMLビルド用で、ViteのライブラリモードとSSRビルドには対応していません。
+
+#### SNSで共有する
+
+デッキのURLをSNSやチャットに貼ったときにカードが表示されるよう、閲覧ページにOGPのメタタグを出力します。
+`og:title`と`og:description`はfrontmatterの`title`・`description`から作られます。
+
+`vite build`では、各デッキの**1ページ目**をPNGとして撮影し、`og:image`にします。
+画像は閲覧ページと同じディレクトリに`ogp.png`（幅1200px、高さはスライドの縦横比に従う）として出力されます。
+見た目はPDF保存と同じで、1ページ目にRevealがある場合はすべての段階を表示した状態になります。
+URLに`#N`をつけてもOGPは1ページ目のままです。
+
+撮影には、ビルドする環境のChromeまたはChromiumを使います。
+自動検出できない場合は、環境変数`CHROME_PATH`で実行ファイルを指定してください。
+見つからない場合や撮影に失敗した場合は、警告を出して`og:image`を省きます（ビルドは成功します）。
+(GitHub Actionsの`ubuntu-latest`には、Chromeが最初から入っています)
+
+多くのSNSは、`og:image`と`og:url`に`https://`から始まる絶対URLを求めます。
+公開先のURLを`siteUrl`オプションで指定してください。
+
+```ts
+export default defineConfig({
+    base: "/my-talks/",
+    plugins: [presenit({ siteUrl: "https://example.com" })],
+});
+```
+
+この設定では、`/slides/example/`の`og:image`は`https://example.com/my-talks/slides/example/ogp.png`になります。
+
+| オプション | 既定値 | 意味                                                                                    |
+| ---------- | ------ | --------------------------------------------------------------------------------------- |
+| `siteUrl`  | なし   | 公開先のURL。`base`が`/`始まりならオリジン、`./`なら出力ディレクトリ直下のURLとして扱う |
+| `ogImage`  | `true` | `false`で1ページ目の撮影をやめ、`og:image`を出力しない                                  |
+
+`siteUrl`がない場合、`og:image`は相対URLになり、`og:url`は出力されません。ビルド時に警告が出ます。
+Viteの`base`が`https://`から始まる完全なURLなら、`siteUrl`は不要です。
+開発サーバーでは撮影しないため、`og:image`は出力されません。
 
 ### 発表する
 
@@ -486,7 +523,8 @@ Viewerの操作UIと発表者ノートは入りません。
 ページ寸法はfrontmatterの`width`・`height`に従います。
 
 PDFはブラウザの印刷機能で保存します。`vite build`でPDFが自動生成されるわけではありません。
-PDF保存のために、ブラウザ自動操作ライブラリをプロジェクトに追加する必要はありません。
+PDF保存のために、ブラウザ自動操作ライブラリやChromeをビルド環境に用意する必要はありません
+（ビルド環境のChromeは[OGP画像](#snsで共有する)の生成にだけ使います）。
 
 ### デッキ一覧を取得する
 
@@ -569,4 +607,4 @@ pnpm dev
 `pnpm build`は、ViewerのJS・CSSを文字列として持つ`src/generated/viewer.ts`を生成し、
 プラグインのJavaScriptと型定義を`dist/`に出力します。
 `src/generated/viewer.ts`はコミット対象です。JSR利用者がViewerを別途ビルドする必要はありません。
-結合テストにはChromeまたはChromiumが必要です。自動検出できない場合は`CHROME_PATH`を指定してください。
+結合テストとOGP画像のテストにはChromeまたはChromiumが必要です（OGP画像のユニットテストは、見つからなければスキップされます）。自動検出できない場合は`CHROME_PATH`を指定してください。

@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import {
     mkdir,
     mkdtemp,
@@ -12,7 +13,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { build, createServer, type ViteDevServer } from "vite";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
     deckMetadata,
     decksModuleCode,
@@ -20,6 +21,7 @@ import {
     replaceRelativeBase,
     type PresenitDeck,
 } from "../src/vite/decks";
+import { findChrome } from "../src/vite/og-image";
 import { presenit } from "../src/vite/plugin";
 
 const stub = fileURLToPath(new URL("../decks.ts", import.meta.url));
@@ -181,7 +183,7 @@ describe("Vite build", () => {
             base,
             configFile: false,
             logLevel: "silent",
-            plugins: [presenit()],
+            plugins: [presenit({ ogImage: false })],
             build: { modulePreload: { polyfill: false } },
         });
         const assets = path.join(root, "dist/assets");
@@ -228,6 +230,51 @@ describe("Vite build", () => {
         const decks = await built("./");
         const dist = pathToFileURL(path.join(fixture, "dist")).href;
         expect(decks.map((deck) => deck.url)).toEqual([dist + "/slides/a/", dist + "/slides/b/"]);
+    }, 60_000);
+});
+
+describe.skipIf(!findChrome())("OGP image", () => {
+    async function builtHtml(env: Record<string, string> = {}): Promise<string> {
+        const root = await project();
+        for (const [key, value] of Object.entries(env)) vi.stubEnv(key, value);
+        try {
+            await build({
+                root,
+                base: "/demo/",
+                configFile: false,
+                logLevel: "silent",
+                plugins: [presenit({ siteUrl: "https://example.com" })],
+            });
+        } finally {
+            vi.unstubAllEnvs();
+        }
+        return readFile(path.join(root, "dist/slides/a/index.html"), "utf8");
+    }
+
+    it("screenshots the first slide with absolute URLs", async () => {
+        const html = await builtHtml();
+        expect(html).toContain(
+            '<meta property="og:url" content="https://example.com/demo/slides/a/">',
+        );
+        expect(html).toContain(
+            '<meta property="og:image" content="https://example.com/demo/slides/a/ogp.png">',
+        );
+        expect(html).toContain('<meta name="twitter:card" content="summary_large_image">');
+        for (const deck of ["a", "b"]) {
+            const png = await readFile(path.join(fixture, "dist/slides", deck, "ogp.png"));
+            expect(png.subarray(1, 4).toString()).toBe("PNG");
+            expect([png.readUInt32BE(16), png.readUInt32BE(20)]).toEqual([1200, 675]);
+        }
+    }, 60_000);
+
+    it("omits the image without a browser", async () => {
+        const html = await builtHtml({ CHROME_PATH: "/nonexistent/chrome" });
+        expect(html).toContain(
+            '<meta property="og:url" content="https://example.com/demo/slides/a/">',
+        );
+        expect(html).not.toContain("og:image");
+        expect(html).toContain('<meta name="twitter:card" content="summary">');
+        expect(existsSync(path.join(fixture, "dist/slides/a/ogp.png"))).toBe(false);
     }, 60_000);
 });
 
