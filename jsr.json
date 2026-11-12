@@ -6,7 +6,7 @@
         "./decks": "./decks.ts"
     },
     "publish": {
-        "include": ["mod.ts", "decks.ts", "src/**/*.ts", "README.md", "llms.txt", "LICENSE"],
+        "include": ["mod.ts", "decks.ts", "src/**/*.ts", "README.md", "LICENSE"],
         "exclude": ["src/client/**"]
     }
 }
