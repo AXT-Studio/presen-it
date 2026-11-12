@@ -12,6 +12,7 @@ Presen'it! is a Vite plugin that turns each selected Markdown file into a presen
 - Requires Node.js >=22.18.0 and Vite 8. Install: `pnpm add -D jsr:@ayaexptech/presen-it` (Vite+: `vp add -D jsr:@ayaexptech/presen-it`); add `vite` if absent.
 - In `vite.config.ts`: `import presenit from "@ayaexptech/presen-it";` then add `presenit()` to `plugins`.
 - Options: `includes` defaults to `["src/**/index.md"]`, `excludes` to `[]`, `root` to `"src"`; paths/globs are relative to Vite root. Selected files must be inside the plugin's `root`.
+- OGP: `vite build` screenshots each deck's first slide to `<route>ogp.png` as `og:image` using Chrome/Chromium (`CHROME_PATH` or auto-detected; skipped with a warning if absent; `ogImage: false` disables). Set `siteUrl` (e.g. `"https://example.com"`) so `og:url`/`og:image` are absolute; for `base: "./"` it is the URL of the output root.
 - Default layout: `src/slides/<name>/index.md`, optional adjacent `assets/`. A deck needs no author-written HTML or viewer entry.
 - Route: remove plugin `root`, `.md`, and a final `index` path segment; append `/`. Thus `src/slides/talk/index.md` → `/slides/talk/`, built as `dist/slides/talk/index.html`. Vite `base` prefixes URLs. Duplicate deck routes or existing HTML at the same route are errors.
 - Dev: `pnpm exec vite`; build: `pnpm exec vite build`; preview: `pnpm exec vite preview`. Publish the entire output directory. No `presenit init/dev/build/export` CLI exists in this version.
