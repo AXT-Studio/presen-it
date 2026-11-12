@@ -532,6 +532,14 @@ AIエージェント向けの短い英語ガイドを、[skills/create-slides-us
 Presen'it!でのスライド作成を依頼するときに読み込ませてください。
 導入・記法・設定・確認に必要な情報をまとめています。
 
+[skills](https://github.com/vercel-labs/skills) CLIからもインストールできます。グローバルインストールする場合は`-g`オプションを追加してください。
+
+```sh
+npx skills add AXT-Studio/presen-it --skill create-slides-using-presen-it       # npm
+pnpm dlx skills add AXT-Studio/presen-it --skill create-slides-using-presen-it  # pnpm
+vp dlx skills add AXT-Studio/presen-it --skill create-slides-using-presen-it    # Vite+
+```
+
 ### v1から移行する
 
 - パッケージはnpmの`@ayaexptech/presenit`から、JSRの`@ayaexptech/presen-it`に変わりました。
