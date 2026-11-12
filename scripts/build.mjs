@@ -48,6 +48,5 @@ if (process.argv.includes("--package")) {
     delete pkg.scripts;
     delete pkg.packageManager;
     await writeFile("tmp/package/package.json", JSON.stringify(pkg, null, 2));
-    for (const name of ["README.md", "LICENSE"])
-        await copyFile(name, "tmp/package/" + name);
+    for (const name of ["README.md", "LICENSE"]) await copyFile(name, "tmp/package/" + name);
 }
