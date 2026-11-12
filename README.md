@@ -319,7 +319,7 @@ graph LR
 > Oキーでスライド一覧を開けます。
 ````
 
-Mermaidの対応範囲はbeautiful-mermaidに従います。図に変換できない場合はコードとして表示します。
+Mermaidの対応範囲は[beautiful-mermaid](https://github.com/lukilabs/beautiful-mermaid)に従います。図に変換できない場合はコードとして表示します。
 生のHTMLは、既定では実行せず文字列として表示します。
 意図してHTMLを埋め込む場合は、frontmatterに`rawHTML: true`を指定してください。
 コメント形式の指示と発表者ノートは、`rawHTML: false`のまま使えます。
