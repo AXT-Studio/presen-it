@@ -260,4 +260,60 @@ Hello <!-- presen-it! reveal (at=3) -->world
         expect(html).not.toContain("presen-it! reveal");
         expect(result.css).toContain("is-concealed");
     });
+
+    describe("reveal with raw inline HTML spanning links (#121)", () => {
+        const render = async (body: string): Promise<string> => {
+            const deck = parseSlideMarkdown(`---
+rawHTML: true
+---
+
+<!-- presen-it! reveal (at=1) -->
+
+${body}
+`);
+            const result = await renderDeckAsync(deck);
+            return result.slides[0]!.html;
+        };
+
+        it("stamps a uniform paragraph instead of splitting the user's element", async () => {
+            const html = await render(
+                '<span style="opacity:.6">実は[`dst`](https://example.com/)が使えます</span>',
+            );
+            expect(html).toContain(
+                '<p data-presenit-at="1"><span style="opacity:.6">実は<a href="https://example.com/"><code>dst</code></a>が使えます</span></p>',
+            );
+            expect(html).not.toContain("presenit-fragment");
+        });
+
+        it("keeps the user's element in one fragment when the paragraph reveals mid-way", async () => {
+            const html = await render(
+                '<span style="opacity:.6">前[L](https://example.com/)<br>後</span> <!-- presen-it! reveal (at=2) -->続き',
+            );
+            expect(html).toContain(
+                '<p><span class="presenit-fragment" data-presenit-at="1"><span style="opacity:.6">前<a href="https://example.com/">L</a><br>後</span> </span><span class="presenit-fragment" data-presenit-at="2">続き</span></p>',
+            );
+        });
+
+        it("relies on the list item's attribute in a tight list", async () => {
+            const html = await render(
+                '- <span style="opacity:.6">前[L](https://example.com/)後</span>\n- next',
+            );
+            expect(html).toContain(
+                '<li data-presenit-at="1"><span style="opacity:.6">前<a href="https://example.com/">L</a>後</span></li>',
+            );
+            expect(html).not.toContain("presenit-fragment");
+        });
+    });
+
+    it("still detects GitHub alerts under reveal", async () => {
+        const deck = parseSlideMarkdown(`<!-- presen-it! reveal (at=1) -->
+
+> [!NOTE]
+> hello
+`);
+        const html = (await renderDeckAsync(deck)).slides[0]!.html;
+        expect(html).toContain('class="presenit-alert presenit-alert--note"');
+        expect(html).toContain('data-presenit-at="1"');
+        expect(html).not.toContain("[!NOTE]");
+    });
 });

@@ -479,16 +479,12 @@ visible from start
             hProperties: { "data-presenit-at": "2" },
         });
 
-        // Column-crossing sticky: third block still at=2
+        // Column-crossing sticky: third block still at=2 (uniform paragraph → stamped itself)
         const col2 = deck.slides[0]!.columns[1]!.children[0]!;
         expect(col2.type).toBe("paragraph");
-        if (col2.type !== "paragraph") {
-            throw new Error("expected paragraph");
-        }
-        const htmlBits = col2.children.filter((c) => c.type === "html");
-        expect(
-            htmlBits.some((c) => c.type === "html" && c.value.includes('data-presenit-at="2"')),
-        ).toBe(true);
+        expect(col2.data).toMatchObject({
+            hProperties: { "data-presenit-at": "2" },
+        });
     });
 
     it("splits phrasing inside strong around inline reveal", () => {
