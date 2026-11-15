@@ -1,57 +1,54 @@
 # AyaExpTech Presen'it!
 
-Markdownから整ったプレゼンスライドを作るViteプラグインです。
-Markdownにコメント形式の指示を少し加えるだけで、改ページ・段組み・段階表示ができます。
-ライブプレビュー、複数デッキの静的ビルド、発表者ビュー、ブラウザ印刷によるPDF保存に対応しています。
+[![JSR: Click to read overview](https://jsr.io/badges/@ayaexptech/presen-it?label=Latest%20version)](https://jsr.io/@ayaexptech/presen-it)
 
-- **書く**：Markdown、コードのハイライト、数式、Mermaidの図、GitHub形式のアラート。
-- **整える**：カラム、中央揃え、明暗のテーマ、アクセントカラー、フォント、スライドサイズ。
-- **発表する**：段階表示（Reveal）、スライド一覧、発表者ノート、タイマー、レーザー、ブラックアウト。
-- **共有する**：Viteで静的サイトとしてビルドし、ブラウザからPDFとして保存。
+Markdownから簡単に整ったプレゼンスライドを作ることができるViteプラグインです。
 
-> [!NOTE]
+- Markdownに(HTMLコメント形式の)Directiveを少し加えるだけで、改ページ・段組み・段階表示をすることができます
+- ライブプレビュー、複数デッキの静的ビルド、発表者ビュー、ブラウザ印刷によるPDF保存に対応しています
+
+Landing Page: [`https://axt-studio.github.io/presen-it/`](https://axt-studio.github.io/presen-it/)
+
+> [!CAUTION]
 > このツールは、そのほとんどがAIによって実装された、いわゆるVibe-Codingプロダクトです。  
-> AIへの指示を行った私(綾坂こと)自身が使用しているためある程度品質については保証しますが、コードベース管理のほとんどをAIエージェントに委任しているプロダクトであることには留意してください。  
-> なお、使用モデルはGPT-6.1 Sol (Codex)・Claude Opus 5.5 (Claude Code)です。
+> AIへの指示を行った私(綾坂こと)自身が使用しているためある程度品質については保証しますが、コードベースのほとんどをAIエージェントに委任しているプロダクトであることには留意してください。  
+> なお、使用ツール・モデルは以下のとおりです。
+>
+> - Codex: GPT-6.1 Sol
+> - Claude Code: Claude Opus 5.5
+> - Cursor: Grok 4.7, Composer 2.5
 
-https://axt-studio.github.io/presen-it/
+GPT-6.1 Sol (Codex)・Claude Opus 5.5 (Claude Code)です。
 
 ## License
 
-copyright (c) 2026- Ayasaka-Koto(AyaExpTech).
-
+copyright (c) 2026- Ayasaka-Koto(AyaExpTech).  
 Released under the [MIT License](LICENSE).
+
+## Quick Start
+
+Vite+をお使いの方は、[`vp create`](https://viteplus.dev/guide/create#template-sources)コマンドを用いてスターターテンプレート([`AXT-AyaKoto/axt-presen-it-template`](https://github.com/AXT-AyaKoto/axt-presen-it-template))を展開できます。
+
+```sh
+vp create github:AXT-AyaKoto/axt-presen-it-template
+```
 
 ---
 
-## Presen'it!の使い方
+## 使い方
 
-### 目次
+以降、資料の1枚1枚を「ページ」、ページをまとめた資料のことを「デッキ」と呼びます。
 
-- [はじめる](#はじめる)
-- [スライドを書く](#スライドを書く)
-- [デッキ全体を設定する](#デッキ全体を設定する)
-- [サイトで公開する](#サイトで公開する)
-- [発表する](#発表する)
-- [PDFとして保存する](#pdfとして保存する)
-- [デッキ一覧を取得する](#デッキ一覧を取得する)
-- [AIにスライド作成を頼む](#aiにスライド作成を頼む)
-- [v1から移行する](#v1から移行する)
-- [このリポジトリで開発する](#このリポジトリで開発する)
+### インストール・セットアップ
 
-### はじめる
-
-#### インストールと設定
-
-Node.js 22.18.0以上とVite 8が必要です。
-JSRのパッケージ`@ayaexptech/presen-it`を、Viteプロジェクトに追加してください。
+Vite 8(以上)導入済みのプロジェクトに、`@ayaexptech/presen-it`を追加します。
 
 ```sh
-pnpm add -D jsr:@ayaexptech/presen-it
+pnpm add -D jsr:@ayaexptech/presen-it  # pnpmを使う場合
+vp add -D jsr:@ayaexptech/presen-it    # Vite+を使う場合 (pnpm or yarn使用時限定)
 ```
 
-Vite+を使う場合は`vp add -D jsr:@ayaexptech/presen-it`でも追加できます。
-新しいプロジェクトでVite自体がまだ入っていない場合は、`pnpm add -D vite`で追加してください。
+そのうえで、`vite.config.ts`に`presenit`をプラグインとして使用するよう記述します。
 
 ```ts
 // vite.config.ts
@@ -63,455 +60,272 @@ export default defineConfig({
 });
 ```
 
-既定では`src/**/index.md`が対象です。たとえば、次の構成でスライドを作れます。
-1つのMarkdownファイルが、複数ページを含む1つの「デッキ」になります。
+#### `presenit()`のオプション
 
-```text
-vite.config.ts
-src/
-  slides/
-    example/
-      index.md
-      assets/       # 画像など。必要な場合のみ
+`presenit()`には以下のプロパティを持つオブジェクトをオプションとして与えることができます。
+
+- `includes: string[]` (既定値: `["src/**/index.md"]`)
+    - 変換対象となるMarkdownファイルにヒットするglobパターンの配列です
+- `excludes: string[]` (既定値: `[]`)
+    - 変換対象から除外するMarkdownファイルにヒットするglobパターンの配列です
+- `root: string` (既定値: `src`)
+    - デッキのビューワーのURLの基準ディレクトリを表す文字列です
+- `siteUrl?: string` (既定値: なし)
+    - 公開先のURLです。`og:image`, `og:url`を設定するためのもので、OGP設定が不要であれば設定しなくて良いです
+- `ogImage: boolean` (既定値: `true`)
+    - 本番ビルドで`og:image`にデッキの1ページ目を設定する場合`true`を指定します
+
+> [!NOTE]
+>
+> - いずれも**Viteプロジェクトのルート**からの相対パスとして処理されます
+> - プラグイン設定側の`root`は、Vite設定側の`root`とは異なる設定です
+> - `includes`・`excludes`の記述にかかわらず、`node_modules`・`dist`・`.git`以下は常に除外されます
+> - `siteUrl`は、Vite設定の`base`が`/`始まりならオリジン、`./`なら出力ディレクトリ直下を基準とするパスとして扱われます
+>     - `base`がデプロイ先の完全なURLのときは、`siteUrl`の設定は不要です
+>     - たとえば`base`が`/my-talks/`、`siteUrl`が`https://example.com`のとき、`/slides/example/`の`og:image`は`https://example.com/my-talks/slides/example/ogp.png`と設定されます
+> - 本番ビルド時、`og:image`の撮影のためにChromeかChromiumを用います
+>     - 自動検出が失敗する場合は環境変数`CHROME_PATH`で実行ファイルを指定してください
+>     - ChromeやChromiumが見つからない場合や撮影に失敗した場合は、警告を出したうえで`og:image`の出力を省いてビルドを続行します
+>     - なお、GitHub Actionsの`ubuntu-latest`にはChromeが入っていて、環境変数`CHROME_PATH: /usr/bin/google-chrome`を指定することでビルドに成功します
+
+変換対象のMarkdownファイルのパスから、ビルド成果物におけるビューワーのパスへの変換規則は以下のとおりです。
+
+- 変換対象のMarkdownファイルの、プラグイン設定の`root`からの相対パスを用意します
+- そこから末尾の`.md`を取り除きます
+- 末尾が`index`ならそれも取り除きます
+- 末尾が`/`でないなら`/`を加えます
+
+たとえば、Vite設定の`base`が`"/"`、プラグイン設定の`root`が`"src"`のとき、以下のように変換されます。
+
+| Markdown                      | 閲覧URL            | ビルド先（既定では`dist/`内） |
+| ----------------------------- | ------------------ | ----------------------------- |
+| `src/slides/example/index.md` | `/slides/example/` | `slides/example/index.html`   |
+| `src/slides/team.md`          | `/slides/team/`    | `slides/team/index.html`      |
+| `src/index.md`                | `/`                | `index.html`                  |
+
+> [!TIP]
+>
+> - 対象Markdownファイルがプラグイン設定の`root`の外にある場合はエラーになります
+> - 同じURLになる変換対象Markdownファイルが複数ある場合もエラーになります
+>     - なお、URLの重複は大文字・小文字を区別せずに判定します
+> - 生成先と同じ場所に既存のHTMLファイル(`public/`含む)がある場合もエラーになります
+> - 上記を満たさない限り(別のURLになるように配置する限り)、通常のViteのHTMLページとデッキを同じプロジェクトに置くことができます
+
+### デッキ(スライド)を作る
+
+デッキは、先の`presenit()`のオプションで指定した場所にあるMarkdownファイルを編集することで作ります。
+
+#### デッキ全体の設定
+
+Frontmatter (先頭の`---`で囲んだYAML)で、デッキ全体の設定を行うことができます。
+以下は既定値です。
+
+```yaml
+title: ""
+description: ""
+theme: light
+hue: 210
+width: 1920
+height: 1080
+fontSize: 32
+fontFamily:
+    sans: [M PLUS 1, system-ui, sans-serif]
+    mono: [JetBrains Mono, ui-monospace, monospace]
+pageTransition:
+    type: fade
+    duration: 0.2
+animation:
+    duration: 0.3
+break: soft
+footer: ""
+rawHTML: false
 ```
 
-#### 最初のスライド
+- `title`: Viewer HTMLの`<title>`と`og:title`に用いられます (空なら`AXT Presen'it! — <route>`)
+    - デッキ自体に表示するタイトルは`# タイトル`のように本文に書いてください
+- `description`: 設定した場合のみ、`meta description`と`og:description`にその文字列が出力されます
+- `theme`: `light` or `dark`
+- `hue`: アクセントカラーの色相(oklch基準)で、mod 360で循環します
+- `width`, `height`: デッキの幅と高さ。単位はpxで、正の数を指定する必要があります
+- `fontSize`: フォントサイズ。単位はpxで、正の数を指定する必要があります
+- `fontFamily.sans`: 本文用のフォント
+- `fontFamily.mono`: コードブロック用のフォント
+- `pageTransition.type`: `fade` or `scroll` or `none`
+- `pageTransition.duration`: ページ切り替えの秒数。`0`で即時切り替え
+- `animation.duration`: Reveal(後述)のフェードの秒数。`0`で即時表示
+- `break`: `soft` or `hard`。段落内の単改行を改行として表示したい場合は`soft`を指定
+- `footer`: 全ページの左下に指定した文字列を挿入できます
+- `rawHTML`: Raw HTMLの記述をHTMLとして読ませたい場合は`true`を指定
 
-`src/slides/example/index.md`に、次の内容を書いてください。
+> [!NOTE]
+> `fontFamily.sans`と同`mono`は、CSS `font-family`文字列か、フォント名の配列を受け取ります。
+> 名前付きフォントを指定した場合はGoogle Fontsからの取得を試みます。
+> `[system-ui, sans-serif]`や`[ui-monospace, monospace]`などの総称フォントを指定することもできます。
 
-````md
----
-title: はじめてのPresen'it!
-description: Markdownからプレゼンスライドを作る
-footer: 綾坂こと
----
+> [!TIP]
+> ここに記載のない独自のキーは描画では用いられませんが、後述するデッキ一覧取得機能から参照することができます。
 
-<!-- presen-it! slide-break (center-x=true) -->
+#### 改ページ・改カラム
 
-# Markdownから、発表まで。
+`<!-- presen-it! slide-break -->`をブロックの間に単独行で置くと改ページします。
 
-いつものエディターでスライドを書く。
+> [!TIP]
+>
+> - 最初の改ページより前が自動的に1ページ目になります
+> - frontmatterの直後の`slide-break`による空ページの作成は行われません
+> - 各ページの最初のブロックが`## 見出し`なら、カラムの上に共通のページ見出しとして表示します
+>     - `# 見出し`や、本文の途中にある`## 見出し`は本文内に表示します
+> - 見出しや水平線`---`などによる改ページは行われません
+> - 本文の量に応じた自動改ページは行いません
+>     - 収まらないときはページを分けるか、文章量や`fontSize`を調整してください
 
-<!-- 最初に自己紹介をします。このコメントは発表者ノートになります。 -->
+`<!-- presen-it! column-break -->`をブロックの間に単独行で置くと、それ以降の本文を右隣のカラムに分けます。
 
-<!-- presen-it! slide-break -->
+> [!NOTE]
+>
+> - 最初の改カラムより前が自動的に最も左のカラムになります
+> - カラムは等幅で横に並び、空のカラムは取り除かれます
+> - 4カラム以上のページがある場合はビルド時に警告がでます
 
-## 左に説明、右にコード
+`slide-break`・`column-break`には、配置のオプションを付けることができます。
 
-- Markdownで本文を書く
-- コメントでレイアウトを指定する
+- `center-x` (既定値: `false`)
+    - 水平方向の整列方法を指定します
+    - `false`で左揃え、`true`で中央揃えとなります
+- `center-y` (既定値: `true`)
+    - 垂直方向の整列方法を指定します
+    - `false`で上揃え、`true`で中央揃えとなります
 
-<!-- presen-it! column-break -->
+> [!NOTE]
+>
+> - `slide-break`に書いた指定はページ内全カラムに適用されます
+> - `column-break`に書いた指定は`slide-break`側の指定をそのカラムだけ上書きします
+> - 複数のオプションは`(center-x=true&center-y=false)`のように`&`で繋いで書きます
+>     - `=`や`&`の前後に空白を入れてはいけません
 
-```ts
-const message = "Hello, slides!";
-console.log(message);
-```
+> [!TIP]
+> ページ先頭の`##`を共通見出しにせず本文側に入れたいときは、`slide-break`の直後に`column-break`を置いてから書けばよいです。
 
-<!-- presen-it! slide-break -->
+#### 段階表示 (Reveal)
 
-## 少しずつ、伝える
-
-この文章は最初から見えます。
-
-<!-- presen-it! reveal (at=1) -->
-
-この文章は「次へ」を1回押すと現れます。
-````
-
-Viteの開発サーバーを起動し、表示されたアドレスの`/slides/example/`を開きます。
-Markdownや参照画像を編集するとプレビューが更新され、表示中のページとRevealの段階を保持します。
-スライド用のHTMLやJavaScriptのエントリを自分で用意する必要はありません。
-
-```sh
-pnpm exec vite
-```
-
-#### 対象ファイルとURLを変える
-
-`presenit()`には、次のオプションを渡せます。
-
-| オプション | 既定値                | 意味                                    |
-| ---------- | --------------------- | --------------------------------------- |
-| `includes` | `["src/**/index.md"]` | 対象のMarkdownを選ぶglobパターンの配列  |
-| `excludes` | `[]`                  | 対象から除外するglobパターンの配列      |
-| `root`     | `"src"`               | デッキのURLを組み立てる基準ディレクトリ |
-
-いずれも**Viteのプロジェクトルート**からの相対パスです。
-SNS共有用の`siteUrl`・`ogImage`オプションは[SNSで共有する](#snsで共有する)を参照してください。
-プラグインの`root`は、Vite自体の`root`とは別の設定です。
-`node_modules`・`dist`・`.git`以下は常に除外されます。
-
-```ts
-presenit({
-    includes: ["src/**/*.md"],
-    excludes: ["src/**/draft/**"],
-    root: "src",
-});
-```
-
-URLは、プラグインの`root`からの相対パスから`.md`を取り除き、ファイル名が`index`ならそれも取り除いて、
-末尾に`/`を付けたものです。ビルド時には、そのディレクトリの`index.html`を生成します。
-上の設定なら、次のようになります（Viteの`base`が`"/"`の場合）。
-
-| Markdown                      | 閲覧URL            | ビルド先（既定の`dist/`内） |
-| ----------------------------- | ------------------ | --------------------------- |
-| `src/slides/example/index.md` | `/slides/example/` | `slides/example/index.html` |
-| `src/slides/team.md`          | `/slides/team/`    | `slides/team/index.html`    |
-| `src/index.md`                | `/`                | `index.html`                |
-
-対象ファイルがプラグインの`root`の外にある場合や、同じURLになるデッキがある場合はエラーになります。
-URLの重複は大文字・小文字を区別せずに判定します。
-生成先と同じ場所に既存のHTML（`public/`内も含む）がある場合もエラーになります。
-別のURLであれば、通常のViteのHTMLページとスライドを同じプロジェクトに置けます。
-
-### スライドを書く
-
-#### 改ページと見出し
-
-`<!-- presen-it! slide-break -->`を、ブロックの間に単独行で置くと改ページします。
-最初の改ページより前が1ページ目になります。
-見出しやMarkdownの水平線だけでは改ページしません。
-
-各ページの最初のブロックが`## 見出し`なら、カラムの上に共通のページ見出しとして表示します。
-`# 見出し`や、本文の途中にある`## 見出し`は、本文内に表示します。
-
-```md
-# 表紙のタイトル
-
-表紙の本文。
-
-<!-- presen-it! slide-break -->
-
-## 2ページ目の見出し
-
-2ページ目の本文。
-```
-
-ファイルの先頭（frontmatterがあればその直後）の`slide-break`は、
-空ページを作らず、1ページ目の配置を指定します。
-本文の量に応じた自動改ページは行いません。
-収まらないときはページを分けるか、文章量や`fontSize`を調整してください。
-
-#### カラムと配置
-
-`<!-- presen-it! column-break -->`を置くと、それ以降の本文を右隣のカラムに分けます。
-カラムは等幅で横に並び、空のカラムは取り除かれます。4カラム以上では警告が出ます。
-
-```md
-<!-- presen-it! slide-break (center-x=true) -->
-
-## 2つの図を比較する
-
-![変更前](./assets/before.png)
-
-<!-- presen-it! column-break (center-y=false) -->
-
-![変更後](./assets/after.png)
-```
-
-`slide-break`と`column-break`には、配置のオプションを付けられます。
-
-| オプション | 既定値  | 意味                                                  |
-| ---------- | ------- | ----------------------------------------------------- |
-| `center-x` | `false` | `true`なら本文を水平方向に中央揃え                    |
-| `center-y` | `true`  | `true`なら本文を垂直方向に中央揃え、`false`なら上揃え |
-
-`slide-break`の指定がページ内のカラムに適用され、
-`column-break`の指定は**その指示で始まるカラム**の配置を上書きします。
-複数のオプションは`(center-x=true&center-y=false)`のように`&`でつなぎ、
-`=`や`&`の前後に空白を入れないでください。
-
-ページ先頭の`##`を共通見出しにせず本文に入れたい場合は、
-`slide-break`の直後に`column-break`を置いてから書きます。
-
-#### 段階表示（Reveal）
-
-`reveal`は、同じページ内で「次へ」を何回押したときに内容を表示するかを指定します。
-`at=0`が最初の状態、`at=1`が1回目、`at=2`が2回目です。
-
-```md
-最初から見える文章。
-
-<!-- presen-it! reveal (at=1) -->
-
-1回目で現れる文章。
-
-<!-- presen-it! reveal (at=2) -->
-
-2回目で現れる文章。
-
-<!-- presen-it! reveal -->
-
-この文章は最初から見えます。
-```
-
-- 指定は**後ろに続く内容**に適用され、次の`reveal`まで有効です。
-- カラムをまたいでも指定は続きます。改ページすると`at=0`に戻ります。
-- `at`は非負整数です。省略した`<!-- presen-it! reveal -->`は`at=0`を指定します。
-- 番号を飛ばすと、その段階は何も変化しない操作になります。番号を戻した指定も可能です。
-- 共通のページ見出しになった`##`は、常に表示されます。
-- 「前へ」では段階を戻り、前のページに戻るときはそのページの最終段階を表示します。
-- スライド一覧とPDFでは、すべての段階を表示します。発表者ビューの「次の表示」は、次の段階をプレビューします。
-
-`reveal`は、リスト項目の末尾や文章の途中、強調の中にも置けます。
-行末に置いた指示は、その項目ではなく**次の内容**から効きます。
+`reveal`ディレクティブを用いることで、同一ページ内で「次へ」を押すたびに要素を順に表示していくような挙動を設定することができます。
 
 ```md
 - 最初から見える項目<!-- presen-it! reveal (at=1) -->
 - 1回目で現れる項目<!-- presen-it! reveal (at=2) -->
 - 2回目で現れる項目
 
-この部分も2回目。<!-- presen-it! reveal (at=3) -->ここからは3回目。
+この部分も2回目。<!-- presen-it! reveal (at=3) -->**ここからは3回目**。
+
+<!-- presen-it! reveal -->
+
+ここは最初から見える。
 ```
 
-ブロックに適用するときは、指示の前後に空行を入れて単独行にしてください。
-行頭のHTMLコメントと同じ行に本文を書くと、Markdownがその行をHTMLブロックとして扱い、
-意図どおりに表示されません。
-不明なコマンドや不正なオプションは、警告を出してその指示全体を無視します。
+- `(at=N)`で「`N`回次へを押したときに表示される」よう指定できます
+    - `N`は非負整数を指定する必要があります
+    - `(at=N)`自体を省略した場合、`(at=0)`として扱われます
+- 指定は**後ろに続く内容**に適用され、次の`reveal`か改ページまで効果が持続します
+    - カラムをまたいでも指定の効果は持続します
+
+> [!TIP]
+>
+> - 番号を飛ばして指定した場合、「次へ」を押しても何も変化しないような挙動をとります
+> - 「前へ」を押した場合段階を戻ります
+>     - 前のページに戻るときは、戻った先のページの最終段階を表示します
+> - ページ一覧・PDFではすべての段階を表示した状態で描画されます
+
+> [!NOTE]
+>
+> - ブロックに対してRevealを適用したい場合は、指示の前後に空行を入れて単独行にしてください
+>     - 行頭のHTMLコメントと同じ行に本文を書くと、Markdownがその行をHTMLブロックとして扱い意図どおりに表示されません
+> - 不明なコマンドや不正なオプションがあった場合は、警告を出したうえでその指示全体を無視して続行します
 
 #### 発表者ノート
 
-各ページの末尾に、通常のHTMLコメントを独立したブロックとして置くと、発表者ノートになります。
-ノートは発表者ビューに表示され、投影画面やPDFには表示されません。
+各ページの末尾に通常のHTMLコメントを(独立したブロックとして)記述すると、それが発表者ノートとして扱われます。  
+ノートは発表者ビューにのみ表示され、聴衆向けの投影画面やPDFには表示されません。
 
-```md
-## 結論
+> [!NOTE]
+>
+> - ページ内最後の絡むの末尾以外のコメントはノートとして扱われません
+> - ノートの内容自体は生成されるHTMLに含まれるため、公開するデッキの発表者ノートには公開できない内容を書かないよう注意してください
 
-スライドに表示する本文。
+#### コード・数式・図
 
-<!--
-ここで実演に切り替える。
-時間がなければ補足は省略する。
--->
+一般的なMarkdown記法に加えて、以下の記法に対応しています。
 
-<!-- presen-it! slide-break -->
-```
+- 表・取り消し線・タスクリスト
+    - GitHub Flavored Markdownの記法に対応しています
+    - チェックボックスは閲覧専用になります
+- コードブロック
+    - 言語名指定のあるコードブロックは[Shiki](https://shiki.style/languages)によってSyntax Highlightされます
+- 数式
+    - KaTeXを用いて描画されます
+    - `$`で囲むとインライン数式として描画できます(例: `$E = mc^2$`)
+    - `$$`で囲んだブロックは数式ブロックとして描画されます
+- Mermaid
+    - [beautiful-mermaid](https://github.com/lukilabs/beautiful-mermaid)が対応している範囲に限り、言語名として`mermaid`を指定したコードブロックが図(SVG)に変換されて描画されます
+- アラート(脚注)記法
+    - `> [!NOTE]`のようなGitHubと同様の記法が使えます
+    - 対応しているワードは`NOTE`・`TIP`・`IMPORTANT`・`WARNING`・`CAUTION`です
+- Raw HTML
+    - Frontmatterで`rawHTML: true`を指定することで、HTMLを埋め込むことができるようになります
+    - この指定がない場合、Raw HTMLはHTMLとして解釈されずに文字列としてそのまま表示します
+        - 各種Directiveと発表者ノートは`rawHTML: false`のままでも使えます
 
-ノートは最後のカラムの末尾に置いてください。途中のコメントはノートとして扱われません。
-ノートの内容自体は生成されたHTMLに含まれるため、公開するデッキには公開できる内容を書いてください。
+#### 画像・リンク
 
-#### Markdown・コード・数式・図
-
-通常の見出し、箇条書き、引用、リンク、画像に加え、次の記法に対応しています。
-
-| 内容                         | 書き方・動作                                                       |
-| ---------------------------- | ------------------------------------------------------------------ |
-| 表・取り消し線・タスクリスト | GitHub Flavored Markdown。チェックボックスは閲覧専用               |
-| コード                       | 言語名付きのコードフェンスをShikiでハイライト                      |
-| インライン数式               | `$E = mc^2$`をKaTeXで描画                                          |
-| 独立した数式                 | `$$`で囲むブロックをKaTeXで描画                                    |
-| Mermaid                      | `mermaid`のコードフェンスをbeautiful-mermaidでSVGに変換            |
-| アラート                     | `NOTE`・`TIP`・`IMPORTANT`・`WARNING`・`CAUTION`をラベル付きで表示 |
-
-````md
-```ts
-const answer: number = 42;
-```
-
-$$
-E = mc^2
-$$
-
-```mermaid
-graph LR
-  Markdown --> Vite --> Presentation
-```
+画像やリンクの相対パスは、Markdownファイルの場所を基準に解決されます。
 
 > [!TIP]
-> Oキーでスライド一覧を開けます。
-````
+> 画像を`slides/xxx/index.md`と同じディレクトリの`assets/`以下に置くなどすると、デッキを1つのディレクトリで管理することができます。
 
-Mermaidの対応範囲は[beautiful-mermaid](https://github.com/lukilabs/beautiful-mermaid)に従います。図に変換できない場合はコードとして表示します。
-生のHTMLは、既定では実行せず文字列として表示します。
-意図してHTMLを埋め込む場合は、frontmatterに`rawHTML: true`を指定してください。
-コメント形式の指示と発表者ノートは、`rawHTML: false`のまま使えます。
-
-#### 画像と別デッキへのリンク
-
-画像の相対パスは、Markdownファイルの場所を基準に解決します。
-画像を同じディレクトリの`assets/`以下に置くと、デッキ単位で管理できます。
-
-```md
-![構成図](./assets/architecture.png)
-
-[別のデッキを開く](../team/index.md)
-```
-
-対象に含まれる別のMarkdownへの相対リンクは、そのデッキの閲覧URLに変換します。
-`../team/index.md#2`のようにページ番号を付けることもできます。
-外部URLはそのまま参照できます。同じデッキのページへは、`#2`のようにページ番号でリンクできます。
-`public/`内の画像も、Viteの通常の規約どおりに参照できます。
-存在しない相対画像を参照するとエラーになります。
-
-### デッキ全体を設定する
-
-ファイル先頭の`---`で囲んだYAML（frontmatter）で、デッキ全体を設定します。
-省略した項目には既定値が使われます。
-
-```yaml
----
-title: 今日の発表
-description: 発表内容の短い説明
-theme: dark
-hue: 280
-fontFamily:
-    sans: [M PLUS 1, system-ui, sans-serif]
-    mono: [JetBrains Mono, ui-monospace, monospace]
-pageTransition:
-    type: scroll
-    duration: 0.2
-footer: 綾坂こと / AyaExpTech
----
-```
-
-| キー                      | 既定値                                     | 意味                                                                     |
-| ------------------------- | ------------------------------------------ | ------------------------------------------------------------------------ |
-| `title`                   | `""`                                       | 閲覧ページの`<title>`・`og:title`。空なら`AXT Presen'it! — <route>`      |
-| `description`             | `""`                                       | 設定時のみmeta descriptionと`og:description`に出力                       |
-| `theme`                   | `light`                                    | `light`または`dark`                                                      |
-| `hue`                     | `210`                                      | アクセントカラーの色相。360で循環（例：`370`は`10`）                     |
-| `width` / `height`        | `1920` / `1080`                            | スライドの幅・高さ（px、正の数）                                         |
-| `fontSize`                | `32`                                       | 基準フォントサイズ（px、正の数）                                         |
-| `fontFamily.sans`         | `"M PLUS 1", system-ui, sans-serif`        | 本文用フォント                                                           |
-| `fontFamily.mono`         | `"M PLUS 1 Code", ui-monospace, monospace` | コード用フォント                                                         |
-| `pageTransition.type`     | `fade`                                     | ページ切り替え：`none`・`fade`・`scroll`                                 |
-| `pageTransition.duration` | `0.2`                                      | ページ切り替えの秒数。`0`で即時切り替え                                  |
-| `animation.duration`      | `0.3`                                      | Revealのフェードの秒数。`0`で即時表示                                    |
-| `rawHTML`                 | `false`                                    | `true`で生のHTMLを描画                                                   |
-| `break`                   | `soft`                                     | `soft`は段落内の単改行を改行として表示。`hard`は通常のMarkdownと同じ扱い |
-| `footer`                  | `""`                                       | 全ページの左下に表示するテキスト。空なら非表示                           |
-
-`title`は閲覧ページの情報です。表紙に表示する見出しは、本文に`# 今日の発表`のように書いてください。
-たとえば`/slides/example/`で`title`が未設定なら、閲覧ページのタイトルは`AXT Presen'it! — /slides/example/`です。
-
-`fontFamily.sans`と`fontFamily.mono`は、CSSの`font-family`文字列か、フォント名の配列を受け取ります。
-配列なら、空白を含むフォント名の引用符を自分で組み立てる必要がありません。
-名前付きフォントはGoogle Fontsからの取得を試み、端末にあるフォントが優先されます。
-通信せずに表示したい場合は、`[system-ui, sans-serif]`や`[ui-monospace, monospace]`などの総称フォントを指定できます。
-
-アニメーションの秒数は0以上です。端末の「視差効果を減らす」設定ではアニメーションを抑制し、印刷時には無効になります。
-型や値が不正な項目は、警告を出して既定値に戻します。
-独自のキーはスライドの表示には使いませんが、[デッキ一覧](#デッキ一覧を取得する)の`frontmatter`から取得できます。
+> [!NOTE]
+>
+> - 別のスライド変換対象Markdownファイルへの相対リンクは、そのデッキの閲覧URLに自動変換されます
+>     - `#N`をつけることでページ番号を指定することもできます
+>     - `#N`だけ書くと同じデッキのページ内リンクになります
+> - `public/`内の画像も、Viteの通常の規約どおりに参照できます
+>     - 存在しない相対画像を参照するとエラーになります
 
 ### サイトで公開する
 
-Viteの通常のコマンドで、対象のすべてのデッキをまとめてビルドします。
+普通にViteビルドすればよいです。  
+Vite+を適切に使っている場合は`vp dev`, `vp build`を使うことができます。
 
-```sh
-pnpm exec vite build
-pnpm exec vite preview
-```
+> [!NOTE]
+> サブディレクトリで公開する場合は、Viteの`base`を設定します。  
+> たとえば次の設定では、デッキのURLは`/my-talks/slides/example/`になります。
+>
+> ```ts
+> export default defineConfig({
+>     base: "/my-talks/",
+>     plugins: [presenit()],
+> });
+> ```
 
-既定の出力先は`dist/`です。HTML・JavaScript・CSS・参照画像などを含む出力ディレクトリ全体を、
-GitHub Pagesなどの静的ホスティングに配置してください。
-`/slides/example/`に対して`slides/example/index.html`を返せるホスティングで利用できます。
-
-サブディレクトリで公開する場合は、Viteの`base`を設定します。
-たとえば次の設定では、デッキのURLは`/my-talks/slides/example/`になります。
-
-```ts
-export default defineConfig({
-    base: "/my-talks/",
-    plugins: [presenit()],
-});
-```
-
-`base: "./"`による相対パスでのビルドにも対応しています。
-通常の`index.html`がある場合は、スライドと一緒にビルドされるため、デッキの一覧ページも作れます。
-Presen'it!はクライアント向けのHTMLビルド用で、ViteのライブラリモードとSSRビルドには対応していません。
-
-#### SNSで共有する
-
-デッキのURLをSNSやチャットに貼ったときにカードが表示されるよう、閲覧ページにOGPのメタタグを出力します。
-`og:title`と`og:description`はfrontmatterの`title`・`description`から作られます。
-
-`vite build`では、各デッキの**1ページ目**をPNGとして撮影し、`og:image`にします。
-画像は閲覧ページと同じディレクトリに`ogp.png`（幅1200px、高さはスライドの縦横比に従う）として出力されます。
-見た目はPDF保存と同じで、1ページ目にRevealがある場合はすべての段階を表示した状態になります。
-URLに`#N`をつけてもOGPは1ページ目のままです。
-
-撮影には、ビルドする環境のChromeまたはChromiumを使います。
-自動検出できない場合は、環境変数`CHROME_PATH`で実行ファイルを指定してください。
-見つからない場合や撮影に失敗した場合は、警告を出して`og:image`を省きます（ビルドは成功します）。
-(GitHub Actionsの`ubuntu-latest`には、Chromeが最初から入っています)
-
-多くのSNSは、`og:image`と`og:url`に`https://`から始まる絶対URLを求めます。
-公開先のURLを`siteUrl`オプションで指定してください。
-
-```ts
-export default defineConfig({
-    base: "/my-talks/",
-    plugins: [presenit({ siteUrl: "https://example.com" })],
-});
-```
-
-この設定では、`/slides/example/`の`og:image`は`https://example.com/my-talks/slides/example/ogp.png`になります。
-
-| オプション | 既定値 | 意味                                                                                    |
-| ---------- | ------ | --------------------------------------------------------------------------------------- |
-| `siteUrl`  | なし   | 公開先のURL。`base`が`/`始まりならオリジン、`./`なら出力ディレクトリ直下のURLとして扱う |
-| `ogImage`  | `true` | `false`で1ページ目の撮影をやめ、`og:image`を出力しない                                  |
-
-`siteUrl`がない場合、`og:image`は相対URLになり、`og:url`は出力されません。ビルド時に警告が出ます。
-Viteの`base`が`https://`から始まる完全なURLなら、`siteUrl`は不要です。
-開発サーバーでは撮影しないため、`og:image`は出力されません。
+> [!TIP]
+>
+> - `base: "./"`による相対パスでのビルドにも対応しています
+> - 通常の`index.html`がある場合はスライドと一緒にビルドされます
+>     - たとえば、デッキの一覧ページを作ることができます
+> - Presen'it!はクライアント向けのHTMLビルド用で、ViteのライブラリモードとSSRビルドには対応していません
 
 ### 発表する
 
-#### 投影画面と操作バー
+Viewerページを開けば直感的に操作できると思うので詳しい説明は省きます。  
+操作メニューはページ中央下部にマウスオーバーすることで表示されます。スマホなどではスライドをタップすれば表示されます。
 
-閲覧画面（Viewer）はスライドの縦横比を保ってウィンドウいっぱいに表示します。
-操作バーは普段は隠れ、画面下部にマウスを近づける、Tabキーでフォーカスを移す、
-タッチ端末でスライドをタップする、といった操作で現れます。
+> [!TIP]
+>
+> - ページ送りは`→`, `Space`, `Enter`, `PageDown`で、戻しは`←`, `PageUp`で行うことができます
+>     - ほとんどのプレゼンリモコンのページ送り・戻しボタンはこれらのいずれかのキーを送信するはずです
 
-操作バーには、前へ・ページ番号・次へ・スライド一覧・レーザー・フルスクリーン・メニューがあります。
-ボタンにマウスを重ねると、名前とショートカットが表示されます。
-ページ番号の下の点はRevealの進行状況で、段階が多い場合は数値で表示します。
-周囲の背景や操作バーもデッキの`theme`・`hue`に合わせた配色になります。
-
-スライド一覧（Overview）では、すべてのRevealを表示したサムネイルからページを選べます。
-タッチ操作では左右のスワイプで前後に移動します。
-
-#### 発表者ビュー
-
-メニューの「発表者ビューを開く」、またはPキーで、別タブに発表者ビューを開きます。
-元のタブを投影し、発表者ビューを手元の画面に置いて使えます。
-
-発表者ビューには、現在のスライド、次の表示、経過時間、発表者ノートが表示されます。
-Revealの途中なら「次の表示」は同じページの次の段階を、それ以外では次のページを表示します。
-操作バーは常に表示されます。
-
-投影画面と発表者ビューのページ・Reveal・ブラックアウト・レーザーは双方向に同期します。
-レーザーを有効にしてスライド上でポインターを動かすと、その位置も共有します。
-ブラックアウトは投影画面を黒くし、発表者ビューは表示したままにします。
-
-同期にはBroadcastChannelを使うため、**同じブラウザ・同じオリジンで同じデッキ**を開いてください。
-別の端末にネットワーク経由で同期する機能ではありません。
-URLに`?presenter`を付けても、発表者ビューを直接開けます。
-
-#### キーボードとURL
-
-| キー                         | 操作                                                                                   |
-| ---------------------------- | -------------------------------------------------------------------------------------- |
-| → / Space / Enter / PageDown | 次へ。ページ内のRevealを進めてから次のページへ                                         |
-| ← / PageUp                   | 前へ。Revealを戻してから前のページへ                                                   |
-| Home / End                   | 最初／最後のページへ移動（そのページの最初の段階を表示）                               |
-| O                            | スライド一覧を開く                                                                     |
-| P                            | 発表者ビューを別タブで開く                                                             |
-| F                            | フルスクリーンを切り替える                                                             |
-| L                            | レーザーを切り替える                                                                   |
-| B / .                        | ブラックアウトを切り替える                                                             |
-| T                            | 発表者ビューのタイマーを一時停止／再開する                                             |
-| R                            | 発表者ビューのタイマーをリセットする                                                   |
-| Esc                          | ブラックアウトの解除、開いた一覧やメニューを閉じる、キーボードで表示した操作バーを隠す |
-
-PageUp・PageDown・`.`を送信するプレゼンリモコンでも操作できます。
-ブラックアウト中は、黒い画面をクリックしても解除できます。
-フルスクリーンが制限されている場合は、ブラウザのメニューから操作してください。
-
-URLの`#N`は1始まりのページ番号です。`/slides/example/#3`なら3ページ目を開きます。
-Revealの段階はURLには入りません。
+> [!NOTE]
+>
+> - 投影画面と発表者ビューのページ・Reveal・ブラックアウト・レーザーを同期する機能があります
+>     - ただし、同期は同じブラウザ・同じオリジンで同じデッキを開いた場合に限ります
 
 ### PDFとして保存する
 
@@ -519,18 +333,12 @@ Revealの段階はURLには入りません。
 2. ブラウザの印刷画面で、送信先に「PDFに保存」を選びます。
 3. 余白なし・倍率100%・ヘッダーとフッターなしを指定し、必要に応じて背景の印刷を有効にして保存します。
 
-メニューからの印刷はフォントと画像の読み込みを待ってから始まります。
-すべてのRevealを表示し、1スライドを1ページとして出力します。
-Viewerの操作UIと発表者ノートは入りません。
-ページ寸法はfrontmatterの`width`・`height`に従います。
-
-PDFはブラウザの印刷機能で保存します。`vite build`でPDFが自動生成されるわけではありません。
-PDF保存のために、ブラウザ自動操作ライブラリやChromeをビルド環境に用意する必要はありません
-（ビルド環境のChromeは[OGP画像](#snsで共有する)の生成にだけ使います）。
+> [!NOTE]
+> PDFはブラウザの印刷機能で保存します。`vite build`でPDFが自動生成されるわけではありません。
 
 ### デッキ一覧を取得する
 
-一覧ページを作りたい場合は、Presen'it!を設定したViteプロジェクト内で、次のモジュールを使えます。
+一覧ページの制作などのために、Presen'it!を設定したViteプロジェクト内で、次のモジュールが使用できます。
 
 ```ts
 import { decks, type PresenitDeck } from "@ayaexptech/presen-it/decks";
@@ -540,7 +348,7 @@ for (const deck of decks) {
 }
 ```
 
-`decks`の型は`readonly PresenitDeck[]`で、各デッキには次の値が入ります。
+`decks`は以下のプロパティを持つオブジェクトの配列です。
 
 | プロパティ         | 型                                  | 内容                                                                |
 | ------------------ | ----------------------------------- | ------------------------------------------------------------------- |
@@ -549,30 +357,26 @@ for (const deck of decks) {
 | `source`           | `string`                            | ViteのプロジェクトルートからのMarkdownの相対パス                    |
 | `title`            | `string`                            | Viewerの`<title>`と同じ値。未設定時の代替タイトルも反映             |
 | `description`      | `string`                            | frontmatterの`description`。未設定なら空文字列                      |
-| `slideCount`       | `number`                            | スライドのページ数                                                  |
-| `theme`            | `"light" \| "dark"`                 | 正規化済みのテーマ                                                  |
-| `hue`              | `number`                            | 正規化済みの色相（0以上360未満）                                    |
+| `slideCount`       | `number`                            | デッキのページ数                                                    |
+| `theme`            | `"light" \| "dark"`                 | テーマ                                                              |
+| `hue`              | `number`                            | 色相（0以上360未満に正規化済）                                      |
 | `width` / `height` | `number`                            | スライドの幅・高さ（px）                                            |
 | `frontmatter`      | `Readonly<Record<string, unknown>>` | 独自キーを含む、記述されたfrontmatter（JSON互換値）                 |
 
-- 並び順はMarkdownのパス順です。必要なら利用側で並べ替えてください。
-- 値はViewerと同じパーサーで読み取ります。`date`や`tags`などの独自キーも一覧に利用できます。
-- `base: "./"`のビルドでは、`url`はバンドルされたJavaScriptの位置から解決した完全なURLになります。
-- 開発中はMarkdownの追加・削除で再読み込みします。編集時はメタデータが変わった場合に、このモジュールを使うページを更新します（`import.meta.hot.accept`でも受け取れます）。
-- 全デッキの`frontmatter`が利用側のJavaScriptに含まれます。公開できる値を使ってください。
-- このモジュールはプラグインが生成します。プラグインを使わない環境で直接実行するとエラーになります。
-
-同じ内容を`virtual:presenit/decks`から取得することもできます。
-型定義が必要な場合は、パッケージの`@ayaexptech/presen-it/decks`を使ってください。
-[examples/slides](./examples/slides/)の`index.html`と`src/main.ts`が一覧ページの実装例です。
+> [!NOTE]
+>
+> - `decks`の並び順はMarkdownのパス順です
+>     - 必要なら利用側でソートしてください
+> - 全デッキの`frontmatter`が利用側のJavaScriptに含まれる形で公開されることに注意してください
+> - このモジュールはプラグインが生成します
+>     - プラグインを使わない環境で直接実行するとエラーになります
+> - 同じ内容を`virtual:presenit/decks`から取得することもできます
+>     - 型定義が必要な場合は、パッケージの`@ayaexptech/presen-it/decks`を使ってください
 
 ### AIにスライド作成を頼む
 
-AIエージェント向けの短い英語ガイドを、[skills/create-slides-using-presen-it/SKILL.md](./skills/create-slides-using-presen-it/SKILL.md)に用意しています。
-Presen'it!でのスライド作成を依頼するときに読み込ませてください。
-導入・記法・設定・確認に必要な情報をまとめています。
-
-[skills](https://github.com/vercel-labs/skills) CLIからもインストールできます。グローバルインストールする場合は`-g`オプションを追加してください。
+Agent Skillを[skills/create-slides-using-presen-it/SKILL.md](./skills/create-slides-using-presen-it/SKILL.md)に用意しています。  
+[skills](https://github.com/vercel-labs/skills) CLIでインストールできます。
 
 ```sh
 npx skills add AXT-Studio/presen-it --skill create-slides-using-presen-it       # npm
@@ -580,16 +384,18 @@ pnpm dlx skills add AXT-Studio/presen-it --skill create-slides-using-presen-it  
 vp dlx skills add AXT-Studio/presen-it --skill create-slides-using-presen-it    # Vite+
 ```
 
-### v1から移行する
+### v1からの移行
 
-- パッケージはnpmの`@ayaexptech/presenit`から、JSRの`@ayaexptech/presen-it`に変わりました。
-- `presenit init/dev/build/export`は廃止しました。Markdownを自分で作成し、Viteの設定とコマンドを使ってください。
-- `src/<slug>/slide.md`という配置は必須ではありません。旧ファイルを使い続ける場合は、`includes: ["src/**/slide.md"]`などで対象に含められます。
-- 既存のfrontmatter・コメント形式の指示・Markdown拡張の意味と既定値は維持しています。
-- 未設定時の閲覧ページのタイトルは`AXT Presen'it! — <route>`です。出力URLとViewerの操作部・内部APIは変更しています。
-- PDFの出力は、Viewerのメニューからブラウザの印刷機能を使います。
+- レジストリをnpm(`@ayaexptech/presenit`)からJSR(`@ayaexptech/presen-it`)に変更しています
+- CLIは廃止され、Vite上で動作するプラグインに変更されています
+- PDF出力はViewerのメニューからブラウザの印刷機能を使う形に変更されました
+- スライドMarkdownファイルのfrontmatterとDirective、各種拡張記法への対応と既定値に変更はありません
+- `src/<slug>/slide.md`という配置が必須ではなくなりました
+    - 旧ファイル構造を使い続ける場合は`includes: ["src/**/slide.md"]`などを設定すればよいです
 
-### このリポジトリで開発する
+---
+
+## for Developers
 
 ```sh
 pnpm install
@@ -597,7 +403,7 @@ pnpm build
 pnpm dev
 ```
 
-サンプルのデッキは`/slides/example/`と`/slides/team/`、一覧ページは`/`です。
+サンプルのデッキは`/slides/example/`と`/slides/team/`、一覧ページは`/`です。  
 `pnpm build:example`でサンプルを静的ビルドし、`pnpm preview`で確認できます。
 
 | コマンド                | 内容                                                       |
@@ -606,7 +412,6 @@ pnpm dev
 | `pnpm test:integration` | ビルドしたパッケージを空のプロジェクトに導入して結合テスト |
 | `pnpm check:jsr`        | JSR公開のドライラン                                        |
 
-`pnpm build`は、ViewerのJS・CSSを文字列として持つ`src/generated/viewer.ts`を生成し、
-プラグインのJavaScriptと型定義を`dist/`に出力します。
-`src/generated/viewer.ts`はコミット対象です。JSR利用者がViewerを別途ビルドする必要はありません。
-結合テストとOGP画像のテストにはChromeまたはChromiumが必要です（OGP画像のユニットテストは、見つからなければスキップされます）。自動検出できない場合は`CHROME_PATH`を指定してください。
+`pnpm build`は、ViewerのJS・CSSを文字列として持つ`src/generated/viewer.ts`を生成し、プラグインのJavaScriptと型定義を`dist/`に出力します。  
+`src/generated/viewer.ts`はコミット対象です。JSR利用者がViewerを別途ビルドする必要はありません。  
+結合テストとOGP画像のテストにはChromeまたはChromiumが必要です(OGP画像のユニットテストは、見つからなければスキップされます)。自動検出できない場合は`CHROME_PATH`を指定してください。
