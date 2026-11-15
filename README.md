@@ -233,7 +233,7 @@ rawHTML: false
 > - 番号を飛ばして指定した場合、「次へ」を押しても何も変化しないような挙動をとります
 > - 「前へ」を押した場合段階を戻ります
 >     - 前のページに戻るときは、戻った先のページの最終段階を表示します
-> - スライド一覧・PDFではすべての段階を表示した状態で描画されます
+> - ページ一覧・PDFではすべての段階を表示した状態で描画されます
 
 > [!NOTE]
 >
@@ -357,7 +357,7 @@ for (const deck of decks) {
 | `source`           | `string`                            | ViteのプロジェクトルートからのMarkdownの相対パス                    |
 | `title`            | `string`                            | Viewerの`<title>`と同じ値。未設定時の代替タイトルも反映             |
 | `description`      | `string`                            | frontmatterの`description`。未設定なら空文字列                      |
-| `slideCount`       | `number`                            | スライドのページ数                                                  |
+| `slideCount`       | `number`                            | デッキのページ数                                                    |
 | `theme`            | `"light" \| "dark"`                 | テーマ                                                              |
 | `hue`              | `number`                            | 色相（0以上360未満に正規化済）                                      |
 | `width` / `height` | `number`                            | スライドの幅・高さ（px）                                            |
